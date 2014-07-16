@@ -1,0 +1,1 @@
+../conjdir/wnconj.h

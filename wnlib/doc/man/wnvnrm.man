@@ -1,0 +1,1 @@
+../../acc/vect/wnvnrm.man

@@ -1,0 +1,1 @@
+../../acc/str/wncase.man

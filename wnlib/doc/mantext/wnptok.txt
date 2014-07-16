@@ -1,0 +1,1 @@
+../man/wnptok.man
