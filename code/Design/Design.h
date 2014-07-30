@@ -465,6 +465,8 @@ class Design {
   void DesignSolveForAllCellsForceDirected(void);
   void DesignSetCellsToSolve(vector<Cell *>);
   void DesignAdjustCells(void);
+  /*Included by rameshul*/
+  void DesignSolveForAllCellsWnnlp(void);      
 
   /* Calling internal and external placers */
   void DesignRunExternalPlacer(EnvGlobalPlacerType, EnvFlatPlacerType);
