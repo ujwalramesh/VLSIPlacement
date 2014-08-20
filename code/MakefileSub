@@ -1,7 +1,9 @@
+CODE_ROOT=/home/rameshul/thesis/VLSIPlacement/code
 OBJDIR=$(CODE_ROOT)/objdir
 INCLUDE_DIR=$(CODE_ROOT)/include
+INCLUDE_WNNLIB=/home/rameshul/thesis/VLSIPlacement/wnlib/acc/h
 
-CFLAGS_LOCAL = $(CFLAGS) -c 
+CFLAGS_LOCAL = $(CFLAGS) -c
 
 include src.mk
 
@@ -15,10 +17,10 @@ OBJSG := $(addprefix $(OBJDIR)/,$(OBJGFILES))
 SRCCPPFILES:= $(SRCFILES:=.cxx)
 
 $(OBJDIR)/%.o : %.cxx $(HFILES)
-	g++ $(CFLAGS_LOCAL) $*.cxx -I $(INCLUDE_DIR) -o $(OBJDIR)/$*.o
+	g++ $(CFLAGS_LOCAL) $*.cxx -I $(INCLUDE_DIR) -I $(INCLUDE_WNNLIB) -o $(OBJDIR)/$*.o
 
 $(OBJDIR)/%-g.o : %.cxx $(HFILES)
-	g++ -g $(CFLAGS_LOCAL) $*.cxx -I $(INCLUDE_DIR) -o $(OBJDIR)/$*-g.o
+	g++ -g $(CFLAGS_LOCAL) $*.cxx -I $(INCLUDE_DIR) -I $(INCLUDE_WNNLIB) -o $(OBJDIR)/$*-g.o
 
 all:  $(OBJS)
 	ld -r $(OBJS) -o $(OBJDIR)/$(MODULE).o

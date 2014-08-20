@@ -1,12 +1,17 @@
 MAKE=make
-#CODE_ROOT=/root/thesis/Ideas/PlacementImprovement/code
+# CODE_ROOT=/root/thesis/Ideas/PlacementImprovement/code
+CODE_ROOT=/home/rameshul/thesis/VLSIPlacement/code
 MAKEFLAGS += -j1
 OBJDIR=$(CODE_ROOT)/objdir
 INCLUDE_DIR=$(CODE_ROOT)/include
 LIB_DIR=$(CODE_ROOT)/libs
+#INCLUDE_WNLIB=$(CODE_ROOT)/include/wnlib/
 
 #LIBSOOQP= -lblas /usr/local/lib/libma27.a -lgfortran -lprofiler
-LIBSOOQP= -lblas -lgfortran -lprofiler 
+#LIBSOOQP= -lblas -lgfortran -lprofiler 
+#changed by rameshul
+LIBSOOQP= -lblas -lgfortran  
+
 
 LIBQUADPROG= #-lQuadProgpp
 LIBMOSEK= #-lmosek64
@@ -61,15 +66,16 @@ GEN_EXEC: main.cxx $(OBJFILES)
 #	$(CC) -c main.cxx -o $(OBJDIR)/main.o -I $(INCLUDE_DIR)
 #	$(CC) -c variables.cxx -o $(OBJDIR)/variables.o -I $(INCLUDE_DIR)
 #	ld -r $(OBJDIR)/main.o $(OBJDIR)/variables.o ./libs/libhmetis.a -o $(OFILE)
-	$(CC) $(CFLAGS) $(LFLAGS) $(OBJFILES) main.cxx variables.cxx -o $(OFILE) -I $(INCLUDE_DIR) $(LIBS)
+	$(CC) $(CFLAGS) $(LFLAGS) $(OBJFILES) main.cxx variables.cxx -o $(OFILE) -I $(INCLUDE_DIR) $(LIBS) 
 
 GEN_EXEC-g: main.cxx $(OBJFILES) 
-	$(CC) $(CFLAGS) -g $(LFLAGS) $(OBJFILES) main.cxx variables.cxx -o $(OFILE) -I $(INCLUDE_DIR) $(LIBS)
+	$(CC) $(CFLAGS) -g $(LFLAGS) $(OBJFILES) main.cxx variables.cxx -o $(OFILE) -I $(INCLUDE_DIR) $(LIBS) 
 
 tag: 	
 	ctags . -R $(CODE_ROOT)
 	sed 's/\/home\/nakul\/thesis\/VLSIPlacement\/code/\$$CODE_ROOT/g' tags > _tags
 	sed 's/\/home\/mukherts\/thesis\/VLSIPlacement\/code/\$$CODE_ROOT/g' _tags > __tags
+	sed 's/\/home\/rameshul/thesis\/VLSIPlacement\/code/\$$CODE_ROOT/g' _tags > __tags
 	mv __tags tags
 	rm -rf _tags
 

@@ -23,8 +23,7 @@
 # include <sys/utsname.h>
 # include <unistd.h>
 # include <signal.h>
-# include <google/profiler.h>
-
+//#include <google/profiler.h>
 # define NIL(type) (type)0
 
 # define COMMON_DEBUG 1
