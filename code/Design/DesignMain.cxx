@@ -1899,6 +1899,40 @@ Design::DesignInit()
   /* empty for now as there are only maps and vectors */
 }
 
+ulong
+Design::DesignComputeLseHPWL()
+{
+  Net *netPtr;
+  string netName;
+  ulong totalLseXHPWL, totalLseYHPWL;
+  ulong totalLseHPWL;
+  uint xHPWL, yHPWL;
+  uint netCount;
+  double wtXHPWL, wtYHPWL;
+  bool useWeighted;
+  //  Env &DesignEnv = DesignGetEnv();
+
+  totalLseXHPWL = 0.0;
+  totalLseYHPWL = 0.0;
+  totalLseHPWL = 0.0;
+  netCount = 0;
+
+  DESIGN_FOR_ALL_NETS((*this), netName, netPtr) {
+    (*netPtr).NetComputeLseHPWL(xHPWL, yHPWL);
+    totalLseXHPWL += xHPWL;
+    totalLseYHPWL += yHPWL;
+    totalLseHPWL +=  xHPWL + yHPWL;
+    //    cout << "Computed HPWL of Net: " << (xHPWL + yHPWL) << endl;
+    netCount++;
+  } DESIGN_END_FOR;
+  //this->DesignXHPWL = totalXHPWL;
+  //this->DesignYHPWL = totalYHPWL;
+  //this->DesignHPWL = totalHPWL;
+  //  cout << "Computed HPWL for : " << netCount << endl;
+  //  DesignPrintNetsHPWL();
+  return totalLseHPWL; 
+}
+
 Design::Design() 
 {
   DesignInit();

@@ -395,6 +395,10 @@ class Design {
   ulong DesignGetXHPWL(void);
   ulong DesignGetYHPWL(void);
 
+  /* Log Sum Exponential HPWL Functions - rameshul included */
+  ulong DesignComputeLseHPWL(void);
+  ulong DesignComputeWtLseHPWL(void);
+
   void DesignComputeBinSize(bool);
   void DesignComputeBinSize(uint, uint);
   void DesignShrinkBinsForILR();

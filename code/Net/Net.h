@@ -59,6 +59,8 @@ class Net {
   bool NetIsUnderCluster(void);
   void NetGetHPWL(uint &, uint &);
   void NetComputeHPWL(uint &, uint &);
+  /* Included by rameshul to compute Log sum exponential wirelength */
+  void NetComputeLseHPWL(uint &, uint &);
   bool NetIsHidden(void);
   
   map<string, Pin*>& NetGetPins(void);

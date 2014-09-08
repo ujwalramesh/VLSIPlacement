@@ -313,3 +313,68 @@ vector<Pin *> & Net::NetGetAllPinsVector(void)
 {
   return (this->PinList);
 }
+
+/* Below Subroutine is used to calculate Log Sum exponential HPWL - icluded by rameshul */  
+
+void
+Net::NetComputeLseHPWL(uint &xHPWL, uint &yHPWL)
+{
+  Pin *pinPtr;
+  Cell *cellPtr;
+  uint cellXpos, cellYpos;
+  uint pinXpos, pinYpos;
+  uint idx;
+
+  /* Alpha value is to be varied to smaller amounts to get a more accurate HPWL */
+  uint alpha = 100;
+  double lsemaxx,lsemaxy,lseminx,lseminy;
+  lsemaxx = 0; lsemaxy =0 ; lseminx =0 ; lseminy = 0;
+    
+  maxx = 0; maxy = 0;
+  minx = INT_MAX; miny = INT_MAX;
+
+  //  cout << "HPWL: Net: " << name << endl;
+  for (idx = 0; idx < pinCount; idx++) {
+    pinPtr = PinsVecX[idx];
+    if ((*pinPtr).isHidden) {
+      continue;
+    }
+    cellPtr = (*pinPtr).PinGetParentCellPtr();
+    pinXpos = pinPtr->xOffset + cellPtr->x;
+    pinYpos = pinPtr->yOffset + cellPtr->y;
+    /*
+    if ((*cellPtr).CellIsHidden()) {
+      cout << "Cell: " << (*cellPtr).CellGetName() << " X: " << cellPtr->x << " Y: " << cellPtr->y 
+	   << " Abs: X: " << pinXpos << " Y: " << pinYpos << endl;
+	   }*/
+
+    /* Commented by rameshul temporarily - to be deleted once the above function is working */    
+           
+    /*if (maxx < pinXpos) {
+      maxx = pinXpos;
+      pinMaxx = pinPtr;
+    }
+    if (maxy < pinYpos) {
+      maxy = pinYpos;
+      pinMaxy = pinPtr;
+    }
+    if (minx > pinXpos) {
+      minx = pinXpos;
+      pinMinx = pinPtr;
+    }
+    if (miny > pinYpos) {
+      miny = pinYpos;
+      pinMiny = pinPtr;
+    }*/
+    lsemaxx += exp(pinXpos/alpha);   
+    lsemaxy += exp(pinYpos/alpha);
+    lseminx += exp(-pinXpos/alpha);
+    lseminy += exp(-pinYpos/alpha);
+
+  }
+  //  cout << "     Maxx : " << maxx << "   Maxy : " << maxy << endl;
+  //  cout << "     Minx : " << minx << "   Miny : " << miny << endl;
+  xHPWL = (alpha * log(lsemaxx)) - (alpha * log(lseminx));   
+  yHPWL = (alpha * log(lsemaxy)) - (alpha * log(lseminy)); 
+}
+
