@@ -61,6 +61,8 @@ class Net {
   void NetComputeHPWL(uint &, uint &);
   /* Included by rameshul to compute Log sum exponential wirelength */
   void NetComputeLseHPWL(uint &, uint &);
+  void NetComputeLseXHPWL(uint &);
+  void NetComputeLseYHPWL(uint &);
   bool NetIsHidden(void);
   
   map<string, Pin*>& NetGetPins(void);

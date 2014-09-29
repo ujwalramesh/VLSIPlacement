@@ -1,0 +1,280 @@
+#include <Design.h>
+
+#include <math.h>
+#include <wnlib.h>
+#include <wnasrt.h>
+#include <wnsll.h>
+#include <wnnlp.h>
+#include <typeinfo>
+void
+getObjFuncInWnnlpFormat()
+{
+
+}
+
+double
+logSumExpWireLength ( )
+{
+
+}
+
+
+void
+getNLPCellsToSolve(Design &myDesign,vector<Cell *> &cellsToSolve)
+{
+
+Cell *cellPtr;
+string cellName;
+
+DESIGN_FOR_ALL_CELLS(myDesign,cellName,cellPtr){
+        cellsToSolve.push_back(cellPtr);
+}DESIGN_END_FOR;
+
+}
+
+void
+nlpInitialValues(vector<Cell *> &cellsToSolve, double* x, double* y)
+{
+
+Cell *cellPtr;
+string cellName;
+uint idx=0;
+
+int size = cellsToSolve.size();
+cout << "Size of cells: " << size << endl;
+//map<uint, Cell *> cellToSolveMap;
+
+//map<uint, Cell *>::iterator cellToSolveMapItr; 
+VECTOR_FOR_ALL_ELEMS(cellsToSolve,Cell *, cellPtr){
+   //     cout << "populating Inital values for cell: " << (*cellPtr).CellGetName();
+        x[idx] = (*cellPtr).CellGetXposDbl();
+        y[idx] = (*cellPtr).CellGetYposDbl();
+  //      cellToSolveMap[idx] = CellPtr;
+     //   cout << "\t Xpos: " << x[idx] << "\t Ypos: " << y[idx] <<endl;
+        idx = idx+1;
+}END_FOR;
+
+//cout << "I value at the end of iteration is: " << idx << endl;
+
+}
+
+double
+wirelengthObjFuncX(int size, double *values,ptr myDesign) /* Need to justify size, values and client_data. Just reused it from definition of pfunction*/
+{
+  /* objective here is total_wirelength = sum over all nets ( wirelength (net) * net weight) */ 
+  Cell *cellPtr;
+  string cellName;
+  uint idx=0;
+        //cout << " Void pointer Type: " <<typeid(*((Design*)myDesign)).name() << endl;  
+        DESIGN_FOR_ALL_CELLS((*((Design*)myDesign)),cellName,cellPtr){
+//                cout << "Changing Xposition for cell: " << (*cellPtr).CellGetName() << " to " << values[idx] << endl; 
+                (*cellPtr).CellSetXposDbl(values[idx]);
+  //              cout << "The new Xposition of the cell is " << (*cellPtr).CellGetXpos() << endl;
+                idx = idx+1;
+
+        }END_FOR;
+        ulong xHPWL;
+        xHPWL = (*((Design*)myDesign)).DesignComputeLseXHPWL();
+        double rtv;
+        rtv = xHPWL;
+        //cout << "ulong wirelength is: " << xHPWL <<endl;
+        return rtv;
+}
+        
+
+double
+wirelengthObjFuncY(int size, double *values,ptr myDesign) /* Need to justify size, values and client_data. Just reused it from definition of pfunction*/
+{
+  /* objective here is total_wirelength = sum over all nets ( wirelength (net) * net weight) */ 
+  Cell *cellPtr;
+  string cellName;
+  uint idx=0;
+        //cout << " Void pointer Type: " <<typeid(*((Design*)myDesign)).name() << endl;  
+        DESIGN_FOR_ALL_CELLS((*((Design*)myDesign)),cellName,cellPtr){
+//                cout << "Changing Yposition for cell: " << (*cellPtr).CellGetName() << " to " << values[idx] << endl; 
+                (*cellPtr).CellSetYposDbl(values[idx]);
+  //              cout << "The new Yposition of the cell is " << (*cellPtr).CellGetYpos() << endl;
+                idx = idx+1;
+
+        }END_FOR;
+        ulong yHPWL;
+        yHPWL = (*((Design*)myDesign)).DesignComputeLseYHPWL();
+        double rtv;
+        rtv = yHPWL;
+        //cout << "ulong wirelength is: " << yHPWL <<endl;
+        return rtv;
+}
+
+void 
+gradientFuncX(double *grad,int size,double *values,ptr myDesign)
+{
+
+        Cell *cellPtr;
+        string cellName;
+        uint 
+        DESIGN_FOR_ALL_CELLS((*((Design*)myDesign)),cellName,cellPtr){
+                (*cellPtr).CellGetYpos() 
+
+
+
+
+}
+
+
+void 
+gradientFuncY(double *grad,int size,double *values,ptr myDesign)
+{
+        
+
+
+
+
+}
+
+void
+Design::DesignSolveForAllCellsWnnlp(void)
+{
+bool debug = true;
+
+//All Variable Declarations for cluster placement
+Cell *clusterCellPtr;
+vector<Cell *> clusterCells;
+double clusterXpos,clusterYpos;
+uint maxx,maxy;
+ulong lseXHPWL,lseYHPWL;
+uint averageClusterWidth,averageClusterHeight;
+uint numClusters,numRows,numSites;
+uint siteWidth,rowHeight;
+
+//All variable Declaration for cell placement
+void *cellObj;
+ofstream logFile;
+vector<Cell *> inputCells;
+uint numVars,nodeIdx;
+uint inputCellCount;
+Cell* allCellsptr;
+string cellName;
+
+string DesignPath, DesignName;
+string DirName;
+
+//All variable declration for nlp solver X and Y component are solved seperately
+
+
+wn_sll constraint_listX;
+wn_sll constraint_listY;
+
+wn_linear_constraint_type linear_constraintX,linear_constraintY;
+wn_nonlinear_constraint_type nonlinear_constraintX,non_linear_constraintY;
+
+wn_nonlinear_constraint_type objectiveX;
+wn_nonlinear_constraint_type objectiveY;
+
+uint iX;
+uint iY;
+
+int codeX;
+int codeY;
+
+double val_minX;
+double val_minY;
+
+
+double *deltaX;
+double *deltaY;
+
+
+
+// All initialization
+Env &DesignEnv = (*this).DesignEnv;
+DesignPath = DesignEnv.EnvGetDesignPath();
+DirName = DesignPath + "/.solverData";
+DesignName = DesignEnv.EnvGetDesignName();
+
+HyperGraph &myGraph = (*this).DesignGetGraph();
+
+HYPERGRAPH_FOR_ALL_NODES(myGraph, nodeIdx, cellObj) {
+    if ((*(Cell*)cellObj).CellIsTerminal()) continue;
+        inputCells.push_back((Cell *)cellObj);
+        cellsToSolve.push_back((Cell *)cellObj);
+} HYPERGRAPH_END_FOR;
+
+
+
+inputCellCount = inputCells.size(); 
+
+
+/*Create Placeable blocks in the design*/
+DesignGetBoundingBox(maxx,maxy);
+averageClusterWidth = (uint)DesignGetAverageClusterCellWidth();
+averageClusterHeight = (uint)DesignGetAverageClusterCellHeight();
+numClusters = DesignGetNumClusters();
+numRows = floor(((double)maxy) / averageClusterHeight);
+numSites = ceil(((double)numClusters) / numRows);
+siteWidth = floor(((double)maxx) / numSites);
+rowHeight = averageClusterHeight;
+
+/* rameshul Debug*/
+if (!debug) { 
+        ulong lseHPWL;
+        cout << "maxx " << maxx << " maxy " << maxy << endl;
+        cout << "avgCluster Width " << averageClusterWidth << " avg Cluster Height" << averageClusterHeight << endl;
+        /* For loop to display cell information of all input cells*/
+       printAllVisibleCellsInDesign((*this),"nlp_cells"); 
+       lseHPWL=DesignComputeLseHPWL();
+       cout << "LSE HPWL of Visible cells is : " << lseHPWL << endl;
+       printVisibleCellsineachCluster((*this),"nlp_cluster");
+}
+/*End Debug*/
+
+
+/* Get all the variables to be solved for from the design class*/
+
+vector<Cell *> cellsToSolve;
+getNLPCellsToSolve ((*this),cellsToSolve);
+numVars= cellsToSolve.size();
+/*rameshul Debug -print the cells returned from the above function  
+
+Cell * cellsToSolvePtr; 
+string cellToSolveName;
+VECTOR_FOR_ALL_ELEMS(cellsToSolve,Cell *,cellsToSolvePtr){
+        cellToSolveName=(*cellsToSolvePtr).CellGetName();
+        cout << "Cell Name to Solve: " << cellToSolveName << " Xpos: " << (*cellsToSolvePtr).CellGetXpos() << " Ypos: " << (*cellsToSolvePtr).CellGetYpos() <<endl;
+}END_FOR;
+
+End Debug*/
+
+double x[numVars];
+double y[numVars];
+/* Populate Initial Values of x and y*/
+nlpInitialValues(cellsToSolve,x,y);
+
+/* rameshul Debug 
+ulong wirelengthBeforeX;
+wirelengthBeforeX = (*this).DesignComputeLseXHPWL();
+cout << "Wirelength X  before changing  is: " << wirelengthBeforeX << endl;
+ulong wirelengthBeforeY;
+wirelengthBeforeY = (*this).DesignComputeLseYHPWL();
+cout << "Wirelength Y  before changing  is: " << wirelengthBeforeY << endl;
+double wirelengthTempX;
+wirelengthTempX = wirelengthObjFuncX(numVars,x,this);  // was just a check to call function
+cout << "Temporary X  Wirelength is: " << wirelengthTempX << endl; 
+double wirelengthTempY;
+wirelengthTempY = wirelengthObjFuncY(numVars,y,this);  // was just a check to call function
+cout << "Temporary Y  Wirelength is: " << wirelengthTempY << endl; 
+ End Debug */
+
+
+
+
+/* Call the conjugate gradient minimizer*/
+
+// For X coordinates
+//Commented for compiling
+//wn_nlp_conj_method();
+
+//For Y coordinates
+//commented for compiling
+//wn_nlp_conj_method();
+
+}

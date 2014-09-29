@@ -629,11 +629,20 @@ FDPTopLevel(Design &myDesign, vector<Cell*> &allCells, uint numRows, uint numSit
   stepTime = getCPUTime();
   if (useFDPNetlist) {
     FDPCreateFDPNetlist(allCells, fdpNetList);
+    /*rameshul Debug*/
+  //  cout << "Created FDP Netlist " << endl;
+    /*End-rameshul Debug*/
   }
   stepTime = getCPUTime() - stepTime;
   cout << "Created intermediate netlist for force-directed solver" << endl;
   DesignEnv.EnvRecordFDNetlistBuildTime(stepTime);
   cout << "Running force-directed solver" << endl;
+/*rameshul inserted for debug*/
+ulong lseHPWL = myDesign.DesignComputeLseHPWL();
+cout << "lse HPWL " << lseHPWL<<endl;
+cout << " Best HPWL is " << bestHPWL << endl; 
+/* End Debug*/
+
   stepTime = getCPUTime();
   FDPCreateGrid(gridMatrix, rowCap, numSitesInRow, numRows, siteWidth, rowHeight);
   FDPFixCellsInSites(gridMatrix, allCells, siteWidth, rowHeight);

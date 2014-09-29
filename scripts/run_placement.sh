@@ -1,6 +1,8 @@
 #!/bin/bash
 
-export BENCHMARK_GEN_ROOT=$HOME/benchmark_gen
+#changed by rameshul#
+export BENCHMARK_GEN_ROOT=${HOME}/Downloads/Benchmarks/benchmark_gen
+#export BENCHMARK_GEN_ROOT=$HOME/benchmark_gen
 export SCRIPT_ROOT=$HOME/thesis/VLSIPlacement/scripts
 export LIB_PATH=$BENCHMARK_GEN_ROOT/Lib/stdcell_rvt/db_nldm
 export LIB_TECH_PATH=$BENCHMARK_GEN_ROOT/Lib/tech

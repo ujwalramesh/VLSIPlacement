@@ -376,11 +376,14 @@ Design::DesignRunInternalPlacer(EnvSolverType solverType)
     DesignSolveForAllCellsConjGradIter();
     break;
   case ENV_SOLVER_NON_LINEAR:
-    if (netModel == ENV_CLIQUE_MODEL) {
+    /*if (netModel == ENV_CLIQUE_MODEL) {
     } else if (netModel == ENV_STAR_MODEL) {
     } else if (netModel == ENV_HYBRID_MODEL) {
-    }
-    cout << "Solver not ready yet!" << endl;
+    }*/
+    cout << "Begin Non Linear Solver" << endl;
+    DesignSolveForAllCellsWnnlp();
+    cout << " In consrtuction -- Exiting" << endl;
+    
     break;
   case ENV_SOLVER_NON_LINEAR_CONJ_GRAD:
     if (netModel == ENV_CLIQUE_MODEL) {
@@ -548,6 +551,9 @@ Design::DesignDoGlobalPlacement(void)
   cout << "Quality : X-HPWL: " << DesignGetXHPWL() 
        << " Y-HPWL: " << DesignGetYHPWL() 
        << " TOTAL: " << DesignGetHPWL() << endl;
+  /*included by rameshul For testing*/
+  ulong lseHPWL = DesignComputeLseHPWL();
+  cout << " Lse HPWL is" << lseHPWL << endl;
 
   _STEP_END("Global placement");  
 }

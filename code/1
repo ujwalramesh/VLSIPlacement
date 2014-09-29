@@ -1,0 +1,156 @@
+#include <Design.h>
+
+#include <math.h>
+#include <wnlib.h>
+#include <wnasrt.h>
+#include <wnsll.h>
+#include <wnnlp.h>
+void
+getObjFuncInWnnlpFormat()
+{
+
+}
+
+double logSumExpWireLength ( )
+{
+
+}
+double wirelengthObjFunc(int size, double *values,ptr client_data) /* Need to justify size, values and client_data. Just reused it from definition of pfunction*/
+{
+  /* objective here is total_wirelength = sum over all nets ( wirelength (net) * net weight) */ 
+  /* First step is to get list of all nets, second is to obtain net weights and then form wirelength function using log sum exponential wirelength model*/
+        double totalWirelength=0;
+        double num_nets; 
+
+        for(int i=0;i<num_nets;i++)
+        {
+          totalWirelength =+ logSumExpWireLength ( );       
+        
+        } 
+                
+        return totalWirelength; 
+
+}
+        
+
+
+void
+Design::DesignSolveForAllCellsWnnlp(void)
+{
+bool debug = true;
+
+//All Variable Declarations for cluster placement
+Cell *clusterCellPtr;
+vector<Cell *> clusterCells;
+double clusterXpos,clusterYpos;
+uint maxx,maxy;
+ulong lseXHPWL,lseYHPWL;
+uint averageClusterWidth,averageClusterHeight;
+uint numClusters,numRows,numSites;
+uint siteWidth,rowHeight;
+
+//All variable Declaration for cell placement
+void *cellObj;
+ofstream logFile;
+vector<Cell *> inputCells;
+uint numVars,nodeIdx;
+uint inputCellCount;
+Cell* allCellsptr;
+string cellName;
+
+string DesignPath, DesignName;
+string DirName;
+
+//All variable declration for nlp solver X and Y component are solved seperately
+
+
+wn_sll constraint_listX;
+wn_sll constraint_listY;
+
+wn_linear_constraint_type linear_constraintX,linear_constraintY;
+wn_nonlinear_constraint_type nonlinear_constraintX,non_linear_constraintY;
+
+wn_nonlinear_constraint_type objectiveX;
+wn_nonlinear_constraint_type objectiveY;
+
+uint iX;
+uint iY;
+
+int codeX;
+int codeY;
+
+double val_minX;
+double val_minY;
+
+double *x,*y;
+
+double *deltaX;
+double *deltaY;
+
+
+
+// All initialization
+Env &DesignEnv = (*this).DesignEnv;
+DesignPath = DesignEnv.EnvGetDesignPath();
+DirName = DesignPath + "/.solverData";
+DesignName = DesignEnv.EnvGetDesignName();
+
+HyperGraph &myGraph = (*this).DesignGetGraph();
+
+HYPERGRAPH_FOR_ALL_NODES(myGraph, nodeIdx, cellObj) {
+    if ((*(Cell*)cellObj).CellIsTerminal()) continue;
+        inputCells.push_back((Cell *)cellObj);
+        cellsToSolve.push_back((Cell *)cellObj);
+} HYPERGRAPH_END_FOR;
+
+
+
+inputCellCount = inputCells.size(); 
+
+
+/*Create Placeable blocks in the design*/
+DesignGetBoundingBox(maxx,maxy);
+averageClusterWidth = (uint)DesignGetAverageClusterCellWidth();
+averageClusterHeight = (uint)DesignGetAverageClusterCellHeight();
+numClusters = DesignGetNumClusters();
+numRows = floor(((double)maxy) / averageClusterHeight);
+numSites = ceil(((double)numClusters) / numRows);
+siteWidth = floor(((double)maxx) / numSites);
+rowHeight = averageClusterHeight;
+
+/* rameshul Debug*/
+if (debug) { 
+        ulong lseHPWL;
+        cout << "maxx " << maxx << " maxy " << maxy << endl;
+        cout << "avgCluster Width " << averageClusterWidth << " avg Cluster Height" << averageClusterHeight << endl;
+        /* For loop to display cell information of all input cells*/
+       printAllVisibleCellsInDesign((*this),"nlp_cells"); 
+       lseHPWL=DesignComputeLseHPWL();
+       cout << "LSE HPWL of Visible cells is : " << lseHPWL << endl;
+       printVisibleCellsineachCluster((*this),"nlp_cluster");
+}
+/*End Debug*/
+
+
+/* Get all the variables to be solved for from the design class*/
+
+
+
+
+
+
+
+
+
+
+
+
+/* Call the conjugate gradient minimizer*/
+
+// For X coordinates
+wn_nlp_conj_method();
+
+//For Y coordinates
+wn_nlp_conj_method();
+
+}

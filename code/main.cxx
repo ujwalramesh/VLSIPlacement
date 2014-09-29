@@ -428,6 +428,8 @@ parseArgsAndAddToEnv(string switchName, string switchValue, Env &topEnv)
       topEnv.EnvSetSolverType(ENV_SOLVER_QUADRATIC_CONJ_GRAD);
     } else if (switchValue == "fdsolver") {
       topEnv.EnvSetSolverType(ENV_SOLVER_FORCE_DIRECTED);
+    } else if (switchValue == "nlp") {
+      topEnv.EnvSetSolverType(ENV_SOLVER_NON_LINEAR);
     } else {
       rtv = false;
     }
@@ -480,11 +482,13 @@ parseArgsAndAddToEnv(string switchName, string switchValue, Env &topEnv)
       topEnv.EnvSetClusterType(ENV_TIMING_DRIVEN_CLUSTERING2);
     } else if (switchValue == "largecluster") {
       topEnv.EnvSetClusterType(ENV_LARGE_CLUSTERING);
+    } else if (switchValue == "nocluster") {
+       topEnv.EnvSetClusterType(ENV_NO_CLUSTERING);
     } else {
       rtv = false;
       cout << "Error: Valid options for cluster_strategy are " 
 	   << "\"bestchoice\", \"firstchoice\", \"netcluster\" "
-	   << "\"tdcluster1\", \"tdcluster2\"" << endl;
+	   << "\"tdcluster1\", \"tdcluster2\", \"nocluster\"" << endl;
     }
   } else if (switchName == "cluster_global_placer") {
     rtv = true;

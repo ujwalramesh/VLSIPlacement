@@ -6,6 +6,7 @@ OBJDIR=$(CODE_ROOT)/objdir
 INCLUDE_DIR=$(CODE_ROOT)/include
 LIB_DIR=$(CODE_ROOT)/libs
 #INCLUDE_WNLIB=$(CODE_ROOT)/include/wnlib/
+STATIC_LIB_PATH=/home/rameshul/thesis/VLSIPlacement/wnlib/acc/text.a
 
 #LIBSOOQP= -lblas /usr/local/lib/libma27.a -lgfortran -lprofiler
 #LIBSOOQP= -lblas -lgfortran -lprofiler 
@@ -66,10 +67,10 @@ GEN_EXEC: main.cxx $(OBJFILES)
 #	$(CC) -c main.cxx -o $(OBJDIR)/main.o -I $(INCLUDE_DIR)
 #	$(CC) -c variables.cxx -o $(OBJDIR)/variables.o -I $(INCLUDE_DIR)
 #	ld -r $(OBJDIR)/main.o $(OBJDIR)/variables.o ./libs/libhmetis.a -o $(OFILE)
-	$(CC) $(CFLAGS) $(LFLAGS) $(OBJFILES) main.cxx variables.cxx -o $(OFILE) -I $(INCLUDE_DIR) $(LIBS) 
+	$(CC) $(CFLAGS) $(LFLAGS) $(OBJFILES) main.cxx variables.cxx -o $(OFILE) -I $(INCLUDE_DIR) $(LIBS) $(STATIC_LIB_PATH) -lm 
 
 GEN_EXEC-g: main.cxx $(OBJFILES) 
-	$(CC) $(CFLAGS) -g $(LFLAGS) $(OBJFILES) main.cxx variables.cxx -o $(OFILE) -I $(INCLUDE_DIR) $(LIBS) 
+	$(CC) $(CFLAGS) -g $(LFLAGS) $(OBJFILES) main.cxx variables.cxx -o $(OFILE) -I $(INCLUDE_DIR) $(LIBS) $(STATIC_LIB_PATH) -lm
 
 tag: 	
 	ctags . -R $(CODE_ROOT)

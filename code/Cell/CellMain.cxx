@@ -88,6 +88,75 @@ Cell::CellSetPosDbl(double Xpos, double Ypos)
   }
 }
 
+/*rameshul Inserted*/
+void
+Cell::CellSetXposDblUpdate(double Xpos) 
+{
+  Pin *pinPtr;
+  Net *netPtr;
+  uint idx, absx;
+  int xOffset;
+  bool updatedx;
+
+  x = Xpos; 
+  for (idx = 0; idx < numPins; idx++) {
+    pinPtr = Pins[idx];
+    netPtr = (*pinPtr).ConnectedNet;
+    xOffset = (*pinPtr).xOffset;
+     updatedx = false; 
+    absx = x + xOffset;
+    if ((*netPtr).maxx <= absx) {
+      (*netPtr).maxx = absx;
+      (*netPtr).pinMaxx = pinPtr;
+      updatedx = true;
+    } 
+    if ((*netPtr).minx >= absx) {
+      (*netPtr).minx = absx;
+      (*netPtr).pinMinx = pinPtr;
+      updatedx = true; 
+    }
+    if (updatedx) (*netPtr).xhpwl = (*netPtr).maxx - (*netPtr).minx;
+  }
+}
+/*End Insert */
+
+
+/*rameshul inserted*/
+
+
+void
+Cell::CellSetYposDblUpdate(double Ypos) 
+{
+  Pin *pinPtr;
+  Net *netPtr;
+  uint idx, absy;
+  int yOffset;
+  bool updatedy;
+
+  y = Ypos; 
+  for (idx = 0; idx < numPins; idx++) {
+    pinPtr = Pins[idx];
+    netPtr = (*pinPtr).ConnectedNet;
+    yOffset = (*pinPtr).yOffset;
+     updatedy = false; 
+    absy = y + yOffset;
+    if ((*netPtr).maxy <= absy) {
+      (*netPtr).maxy = absy;
+      (*netPtr).pinMaxy = pinPtr;
+      updatedy = true;
+    } 
+    if ((*netPtr).miny >= absy) {
+      (*netPtr).miny = absy;
+      (*netPtr).pinMiny = pinPtr;
+      updatedy = true; 
+    }
+    if (updatedy) (*netPtr).yhpwl = (*netPtr).maxy - (*netPtr).miny;
+  }
+}
+
+/*End Insert */
+
+
 void
 Cell::CellSetOldPos(double oldXpos, double oldYpos) 
 {
@@ -168,7 +237,7 @@ Cell::CellSetIsCluster(const bool& isCluster)
 }
 
 void
-Cell::CellSetIsClusterChild(const bool& isClusterChild)
+Cell::CellSetIsClusterChild(bool isClusterChild)
 {
   this->isClusterChild = isClusterChild;
 }
@@ -285,6 +354,12 @@ void
 Cell::CellSetBin(Bin *binOfCell) 
 {
   cellBin = binOfCell;
+}
+
+void
+Cell::CellSetParentCluster(Cell *parentClusterPtr)
+{
+       parentCluster = parentClusterPtr;
 }
 
 void
@@ -773,6 +848,11 @@ Cell::CellGetBin(void)
   return (cellBin);
 }
 
+Cell*
+Cell::CellGetParentCluster(void)
+{
+        return(parentCluster);
+}
 Cell::Cell()
 {
   CellSetPos(0, 0);

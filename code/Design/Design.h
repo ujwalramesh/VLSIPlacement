@@ -397,6 +397,8 @@ class Design {
 
   /* Log Sum Exponential HPWL Functions - rameshul included */
   ulong DesignComputeLseHPWL(void);
+  ulong DesignComputeLseXHPWL(void);
+  ulong DesignComputeLseYHPWL(void);
   ulong DesignComputeWtLseHPWL(void);
 
   void DesignComputeBinSize(bool);
@@ -682,4 +684,7 @@ extern void DesignWriteClusterData(vector<Cell *> &, vector<Net *> &,
 				   vector<double> &netWeights, map<Cell *, bool> &, 
 				   string, uint, uint, uint, uint, bool, bool);
 extern vector<Cell*> DesignGetConnectedCells(HyperGraph &, Cell *);
+/* rameshul Inserted*/ 
+extern void printAllVisibleCellsInDesign(Design& myDesign,string fname);
+extern void printVisibleCellsineachCluster ( Design& myDesign, string fname);
 #endif

@@ -7,6 +7,7 @@
 class Pin;
 class Net;
 class Bin;
+class Cluster;
 using namespace std;
 
 class Cell {
@@ -30,6 +31,7 @@ class Cell {
   string origName;
   string libCellName;
   string libName;
+  Cell *parentCluster;
 
  public:
   double x, y;
@@ -53,10 +55,12 @@ class Cell {
   void CellSetXpos(uint);
   void CellSetOldXpos(double);
   void CellSetXposDbl(double);
+  void CellSetXposDblUpdate(double);
   void CellSetOldYPos(double);
   void CellSetYpos(uint);
   void CellSetOldYpos(double);
   void CellSetYposDbl(double);
+  void CellSetYposDblUpdate(double);
   void CellSetOldPos(double, double);
   void CellSetPosDbl(double, double);
   void CellSetPos(uint, uint);
@@ -72,7 +76,8 @@ class Cell {
   void CellSetNumOutPins(int);
   void CellSetIsTerminal(const bool&);
   void CellSetIsCluster(const bool&);
-  void CellSetIsClusterChild(const bool&);
+  // rameshul modified. removed const from arguement of below function 
+  void CellSetIsClusterChild(bool);
   void CellSetIsClustered(const bool&);
   void CellSetIsMacro(const bool &);
   void CellSetIsFixed(const bool &);
@@ -89,6 +94,7 @@ class Cell {
   void CellAddPin(Pin *);
   void CellAddArcDelay(Pin *, Pin *, double);
   void CellSetBin(Bin *);
+  void CellSetParentCluster(Cell *);
   void CellIncrementClusterLevel(void);
   void CellDecrementClusterLevel(void);
 
@@ -132,6 +138,7 @@ class Cell {
   vector<Cell*> CellGetChildCells(void);
   double CellGetArcDelay(Pin *, Pin *);
   Bin *CellGetBin(void);
+  Cell *CellGetParentCluster(void);
 
   /* Other functions */
   void CellMoveRight(int);
@@ -144,6 +151,7 @@ class Cell {
   void CellFindModifiedHPWL(ulong&, ulong&, ulong&, ulong&);
   Pin* CellGetPinByName(const string &PinName);
 };
+
 
 class Cluster {
  private:

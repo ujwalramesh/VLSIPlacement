@@ -330,7 +330,7 @@ CellSetDblX	$CODE_ROOT/Flags/FlagsMain.cxx	/^void CellSetDblX(Cell *cellPtr, dou
 CellSetDblY	$CODE_ROOT/Flags/FlagsMain.cxx	/^void CellSetDblY(Cell *cellPtr, double cellDblY)$/;"	f
 CellSetHeight	$CODE_ROOT/Cell/CellMain.cxx	/^Cell::CellSetHeight(int Height) $/;"	f	class:Cell
 CellSetIsCluster	$CODE_ROOT/Cell/CellMain.cxx	/^Cell::CellSetIsCluster(const bool& isCluster)$/;"	f	class:Cell
-CellSetIsClusterChild	$CODE_ROOT/Cell/CellMain.cxx	/^Cell::CellSetIsClusterChild(const bool& isClusterChild)$/;"	f	class:Cell
+CellSetIsClusterChild	$CODE_ROOT/Cell/CellMain.cxx	/^Cell::CellSetIsClusterChild(bool isClusterChild)$/;"	f	class:Cell
 CellSetIsClustered	$CODE_ROOT/Cell/CellMain.cxx	/^Cell::CellSetIsClustered(const bool& isClustered)$/;"	f	class:Cell
 CellSetIsClustered	$CODE_ROOT/Flags/FlagsMain.cxx	/^void CellSetIsClustered(Cell *cellPtr)$/;"	f
 CellSetIsFixed	$CODE_ROOT/Cell/CellMain.cxx	/^Cell::CellSetIsFixed(const bool & isFixed) $/;"	f	class:Cell
@@ -858,6 +858,8 @@ DesignWritePlacement	$CODE_ROOT/Design/DesignWrite.cxx	/^DesignWritePlacement(De
 DesignWriteScl	$CODE_ROOT/Design/DesignWrite.cxx	/^DesignWriteScl(Design &myDesign, string fname)$/;"	f
 DesignWriteStats	$CODE_ROOT/Design/DesignAnalysis.cxx	/^void DesignWriteStats(Design& myDesign)$/;"	f
 DesignWriteWtsFile	$CODE_ROOT/Design/DesignWrite.cxx	/^DesignWriteWtsFile(Design &myDesign, string fname) $/;"	f
+DesignWriteAllCellsDebug   $CODE_ROOT/Design/DesignWrite.cxx      /^printAllVisibleCellsInDesign(Design &myDesign, string fname) $/;"     f
+DesignWriteVisibleCellsinCluster $CODE_ROOT/Design/DesignWrite.cxx /^printVisibleCellsineachCluster ( Design& myDesign, string fname) $/;"      f
 DesignXHPWL	$CODE_ROOT/Design/Design.h	/^  ulong DesignXHPWL, DesignYHPWL;$/;"	m	class:Design
 DesignXHPWL	$CODE_ROOT/include/Design.h	/^  ulong DesignXHPWL, DesignYHPWL;$/;"	m	class:Design
 DesignYHPWL	$CODE_ROOT/Design/Design.h	/^  ulong DesignXHPWL, DesignYHPWL;$/;"	m	class:Design

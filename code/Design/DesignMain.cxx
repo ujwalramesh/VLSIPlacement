@@ -1917,12 +1917,21 @@ Design::DesignComputeLseHPWL()
   totalLseHPWL = 0.0;
   netCount = 0;
 
+  //cout << "Debug1" << endl;
+
   DESIGN_FOR_ALL_NETS((*this), netName, netPtr) {
     (*netPtr).NetComputeLseHPWL(xHPWL, yHPWL);
     totalLseXHPWL += xHPWL;
     totalLseYHPWL += yHPWL;
     totalLseHPWL +=  xHPWL + yHPWL;
     //    cout << "Computed HPWL of Net: " << (xHPWL + yHPWL) << endl;
+    //cout << "netcount: " << netCount << endl;
+    /*if (netCount == 2){
+            cout << " Net 2 Details: " << netName << endl;
+            cout << " totalLseXHPWL is " << totalLseXHPWL <<endl;
+            cout << " totalLseYHPWL is " << totalLseYHPWL <<endl;
+            cout << " totalLseHPWL is " << totalLseHPWL <<endl;
+    } */                
     netCount++;
   } DESIGN_END_FOR;
   //this->DesignXHPWL = totalXHPWL;
@@ -1932,6 +1941,68 @@ Design::DesignComputeLseHPWL()
   //  DesignPrintNetsHPWL();
   return totalLseHPWL; 
 }
+
+ulong
+Design::DesignComputeLseXHPWL()
+{
+  Net *netPtr;
+  string netName;
+  ulong totalLseXHPWL;
+  uint xHPWL;
+  uint netCount;
+  double wtXHPWL;
+  bool useWeighted;
+  //  Env &DesignEnv = DesignGetEnv();
+
+  totalLseXHPWL = 0.0;
+  
+  netCount = 0;
+
+  DESIGN_FOR_ALL_NETS((*this), netName, netPtr) {
+    (*netPtr).NetComputeLseXHPWL(xHPWL);
+    totalLseXHPWL += xHPWL;
+    //    cout << "Computed HPWL of Net: " << (xHPWL + yHPWL) << endl;
+    //cout << "netcount: " << netCount << endl;
+  /*  if (netCount == 2){
+            cout << " Net 2 Details: " << netName << endl;
+            cout << " totalLseXHPWL is " << totalLseXHPWL <<endl;
+    }*/                 
+    netCount++;
+  } DESIGN_END_FOR;
+  return totalLseXHPWL; 
+}
+
+
+ulong
+Design::DesignComputeLseYHPWL()
+{
+  Net *netPtr;
+  string netName;
+  ulong totalLseYHPWL;
+  uint yHPWL;
+  uint netCount;
+  double wtYHPWL;
+  bool useWeighted;
+  //  Env &DesignEnv = DesignGetEnv();
+
+  totalLseYHPWL = 0.0;
+  
+  netCount = 0;
+
+  DESIGN_FOR_ALL_NETS((*this), netName, netPtr) {
+    (*netPtr).NetComputeLseYHPWL(yHPWL);
+    totalLseYHPWL += yHPWL;
+    //    cout << "Computed HPWL of Net: " << (xHPWL + yHPWL) << endl;
+    //cout << "netcount: " << netCount << endl;
+  /*  if (netCount == 2){
+            cout << " Net 2 Details: " << netName << endl;
+            cout << " totalLseXHPWL is " << totalLseXHPWL <<endl;
+    }*/                 
+    netCount++;
+  } DESIGN_END_FOR;
+  return totalLseYHPWL; 
+}
+
 
 Design::Design() 
 {

@@ -2088,6 +2088,10 @@ Design::DesignCreateClusterObject(vector<Cell *> &clusterCells, double xPercent,
       //      cellYpos = 0;
       (*cellPtr).CellSetPosDbl(cellXpos, cellYpos);
       (*cellPtr).CellSetIsClusterFixed(false);
+      // rameshul inserted
+      (*cellPtr).CellSetIsClusterChild(true);
+      (*cellPtr).CellSetParentCluster(clusterCell);
+      // rameshul end
     } END_FOR;
     clusterCreationTime += getCPUTime() - stepTime;
     if (placeCellsInClusterPreTop) {
@@ -2314,6 +2318,9 @@ Design::DesignClusterPlaceCells(Cell *clusterCell,
   (*clusterOfCell).ClusterSetPlacementTime(clusterPlacementTime);
   DesignComputeHPWL();
   cout << " TOTAL HPWL: " << DesignGetHPWL() << endl;
+  /* rameshul insertion*/
+  //ulong lseHPWL = DesignComputeLseHPWL();
+  //cout << "lse HPWL: " << lseHPWL << endl;
 }
 
 void
