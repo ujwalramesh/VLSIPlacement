@@ -381,7 +381,40 @@ Design::DesignRunInternalPlacer(EnvSolverType solverType)
     } else if (netModel == ENV_HYBRID_MODEL) {
     }*/
     cout << "Begin Non Linear Solver" << endl;
-    DesignSolveForAllCellsWnnlp();
+    DesignSolveForAllCellsWnnlpNew();
+    /************** rameshul inserted************/
+    /************** No Justification to flow, Just copied from below **********/
+    /************* Comment upto End trial if flow fails ******/
+
+    //ProfilerStart("ClusterSwapping");
+    //DesignDoClusterSwapping();
+    //ProfilerStop();
+    DesignFillCellsInCluster();
+    //DesignDoClusterFlipping();
+
+    /*************************************/
+    /***      BEGIN SHAPING FLOW      ***/
+    /************************************/
+    DesignDoClusterShaping();
+    DesignComputeHPWL();
+    cout << "BEFORE FLOORPLANNING HPWL : " << DesignGetHPWL() << endl;
+    changeDir("inputShaping");
+    DesignWriteBookShelfOutput((*this), DesignName, true);
+    changeDir("..");
+    DesignRunMetaPlacerCapo("forShaping", DesignName, 1, 1, 0, MPlacerLogFile);
+    changeDir("afterMP");
+    DesignWriteBookShelfOutput((*this), DesignName);
+    changeDir("..");
+    DesignComputeHPWL();
+    cout << "AFTER FLOORPLANNING HPWL : " << DesignGetHPWL() << endl;
+    DesignResetOrientations();
+    DesignWriteBookShelfOutput((*this), finalOutputName);
+
+    DesignComputeHPWL();
+    cout << "AFTER RESET ORIENTATIONS HPWL : " << DesignGetHPWL() << endl;
+   /*************** End Trial**************/
+
+
     cout << " In consrtuction -- Exiting" << endl;
     
     break;
@@ -546,7 +579,7 @@ Design::DesignDoGlobalPlacement(void)
   DesignComputeHPWL();
   totalHPWL = DesignGetHPWL();
   DesignEnv.EnvSetHPWLTotalGlobal(totalHPWL);
-  //DesignCollapseClusters();
+  DesignCollapseClusters();
   //  ProfilerStop();
   cout << "Quality : X-HPWL: " << DesignGetXHPWL() 
        << " Y-HPWL: " << DesignGetYHPWL() 

@@ -7,7 +7,7 @@
 #include "wnlib/wnnlp.h"
 #include <typeinfo>
 
-local double myDivide(double num, double denom) 
+local double myDivideNew(double num, double denom) 
 {
         if (denom <= 0.0)
         {
@@ -23,11 +23,8 @@ local double myDivide(double num, double denom)
         }
 }
 
-
-
-
 void
-getNLPCellsToSolve(Design &myDesign,vector<Cell *> &cellsToSolve)
+getNLPCellsToSolveNew(Design &myDesign,vector<Cell *> &cellsToSolve)
 {
 
 Cell *cellPtr;
@@ -40,7 +37,7 @@ DESIGN_FOR_ALL_CELLS(myDesign,cellName,cellPtr){
 }
 
 void
-nlpInitialValues(vector<Cell *> &cellsToSolve, double* x, double* y)
+nlpInitialValuesNew(vector<Cell *> &cellsToSolve, double* x)
 {
 
 Cell *cellPtr;
@@ -55,10 +52,10 @@ int size = cellsToSolve.size();
 VECTOR_FOR_ALL_ELEMS(cellsToSolve,Cell *, cellPtr){
    //     cout << "populating Inital values for cell: " << (*cellPtr).CellGetName();
         x[idx] = (*cellPtr).CellGetXposDbl();
-        y[idx] = (*cellPtr).CellGetYposDbl();
+        x[idx+1] = (*cellPtr).CellGetYposDbl();
   //      cellToSolveMap[idx] = CellPtr;
-       cout << "\t Xpos: " << x[idx] << "\t Ypos: " << y[idx] <<endl;
-        idx = idx+1;
+       cout << "\t Xpos: " << x[idx] << "\t Ypos: " << x[idx+1] << "\t actualXpos: " << (*cellPtr).CellGetXposDbl() << "\t actualYpos: " << (*cellPtr).CellGetYposDbl()<< endl;
+        idx = idx+2;
 }END_FOR;
 
 //cout << "I value at the end of iteration is: " << idx << endl;
@@ -66,7 +63,7 @@ VECTOR_FOR_ALL_ELEMS(cellsToSolve,Cell *, cellPtr){
 }
 
 double
-wirelengthObjFuncX(int size, double *values,ptr myDesign) /* Need to justify size, values and client_data. Just reused it from definition of pfunction*/
+wirelengthObjFunc(int size, double *values,ptr myDesign) /* Need to justify size, values and client_data. Just reused it from definition of pfunction*/
 {
   /* objective here is total_wirelength = sum over all nets ( wirelength (net) * net weight) */ 
   Cell *cellPtr;
@@ -76,44 +73,21 @@ wirelengthObjFuncX(int size, double *values,ptr myDesign) /* Need to justify siz
         DESIGN_FOR_ALL_CELLS((*((Design*)myDesign)),cellName,cellPtr){
 //                cout << "Changing Xposition for cell: " << (*cellPtr).CellGetName() << " to " << values[idx] << endl; 
                 (*cellPtr).CellSetXposDbl(values[idx]);
+                (*cellPtr).CellSetYposDbl(values[idx+1]);
   //              cout << "The new Xposition of the cell is " << (*cellPtr).CellGetXpos() << endl;
-                idx = idx+1;
+                idx = idx+2;
 
         }END_FOR;
-        ulong xHPWL;
-        xHPWL = (*((Design*)myDesign)).DesignComputeLseXHPWL();
+        ulong LseHPWL;
+        LseHPWL = (*((Design*)myDesign)).DesignComputeLseHPWL();
         double rtv;
-        rtv = xHPWL;
+        rtv = LseHPWL;
         //cout << "ulong wirelength is: " << xHPWL <<endl;
         return rtv;
 }
         
-
-double
-wirelengthObjFuncY(int size, double *values,ptr myDesign) /* Need to justify size, values and client_data. Just reused it from definition of pfunction*/
-{
-  /* objective here is total_wirelength = sum over all nets ( wirelength (net) * net weight) */ 
-  Cell *cellPtr;
-  string cellName;
-  uint idx=0;
-        //cout << " Void pointer Type: " <<typeid(*((Design*)myDesign)).name() << endl;  
-        DESIGN_FOR_ALL_CELLS((*((Design*)myDesign)),cellName,cellPtr){
-//                cout << "Changing Yposition for cell: " << (*cellPtr).CellGetName() << " to " << values[idx] << endl; 
-                (*cellPtr).CellSetYposDbl(values[idx]);
-  //              cout << "The new Yposition of the cell is " << (*cellPtr).CellGetYpos() << endl;
-                idx = idx+1;
-
-        }END_FOR;
-        ulong yHPWL;
-        yHPWL = (*((Design*)myDesign)).DesignComputeLseYHPWL();
-        double rtv;
-        rtv = yHPWL;
-        //cout << "ulong wirelength is: " << yHPWL <<endl;
-        return rtv;
-}
-
 void 
-gradientFuncX(double *grad,int size,double *values,ptr myDesign)
+gradientFunc(double *grad,int size,double *values,ptr myDesign)
 {
 
         Cell *cellPtr;
@@ -121,79 +95,67 @@ gradientFuncX(double *grad,int size,double *values,ptr myDesign)
         uint alpha = 500;
         uint idx=0;
         uint cellXpos;  
+        uint cellYpos;
         DESIGN_FOR_ALL_CELLS((*((Design*)myDesign)),cellName,cellPtr){
                 double gradX=0;
+                double gradY=0;
                 double cellMaxx;
                 double cellMinx;
+                double cellMaxy;
+                double cellMiny;
                 cellXpos = (*cellPtr).CellGetXpos();
+                cellYpos = (*cellPtr).CellGetYpos();
                 Net *netPtr;
                 double sumPinsPos;
                 double pinMaxx;
                 double pinMinx;
-                double tempDivide;
-                uint pinXpos;
-                CELL_FOR_ALL_NETS_NO_DIR((*cellPtr),netPtr){
-                        Pin *pinPtr;
-                        NET_FOR_ALL_PINS((*netPtr),pinPtr){
-                                pinXpos = pinPtr->xOffset + cellXpos;
-                                tempDivide= myDivide(pinXpos,alpha);
-                                pinMaxx += exp(tempDivide);
-                                pinMinx +=1/(exp(tempDivide));
-                        }NET_END_FOR;
-                }CELL_END_FOR;
-                double tempDiv;
-                tempDiv = myDivide(cellXpos,alpha);
-                cellMaxx = exp(tempDiv);
-                cellMinx = 1/(exp(tempDiv));
-                double temp1;
-                double temp2;
-                temp1 = myDivide(cellMaxx,pinMaxx);
-                temp2 = myDivide(cellMinx,pinMinx);
-                gradX = (temp1)-(temp2);
-                grad[idx] = gradX;
-                //cout << "gradient value for cell: " << (*cellPtr).CellGetName() << "is" << gradX << endl;
-                idx=idx+1;
-        }DESIGN_END_FOR;
-}
-
-
-void 
-gradientFuncY(double *grad,int size,double *values,ptr myDesign)
-{
-        Cell *cellPtr;
-        string cellName;
-        uint alpha = 500;
-        uint idx=0;
-        uint cellYpos;  
-        DESIGN_FOR_ALL_CELLS((*((Design*)myDesign)),cellName,cellPtr){
-                double gradY=0;
-                double cellMaxy;
-                double cellMiny;
-                cellYpos = (*cellPtr).CellGetYpos();
-                Net *netPtr;
-                double sumPinsPos;
                 double pinMaxy;
                 double pinMiny;
+                double tempDivideX;
+                double tempDivideY;
+                uint pinXpos;
                 uint pinYpos;
                 CELL_FOR_ALL_NETS_NO_DIR((*cellPtr),netPtr){
                         Pin *pinPtr;
                         NET_FOR_ALL_PINS((*netPtr),pinPtr){
+                                pinXpos = pinPtr->xOffset + cellXpos;
                                 pinYpos = pinPtr->yOffset + cellYpos;
-                                pinMaxy += exp(myDivide(pinYpos,alpha));
-                                pinMiny +=1/(exp(myDivide(pinYpos,alpha)));
+                                tempDivideX= myDivideNew(pinXpos,alpha);
+                                tempDivideY= myDivideNew(pinYpos,alpha);
+                                pinMaxx += exp(tempDivideX);
+                                pinMinx +=1/(exp(tempDivideX));
+                                pinMaxy += exp(tempDivideY);
+                                pinMiny +=1/(exp(tempDivideY));
                         }NET_END_FOR;
                 }CELL_END_FOR;
-                cellMaxy = exp(myDivide(cellYpos,alpha));
-                cellMiny = 1/(exp(myDivide(cellYpos,alpha)));
-                gradY = (myDivide(cellMaxy,pinMaxy))-(myDivide(cellMiny,pinMiny));
-                grad[idx] = gradY;
-                //cout << "Y gradient value for cell: " << (*cellPtr).CellGetName() << "is" << gradY << endl;
-                idx=idx+1;
+                double tempDivX;
+                double tempDivY;
+                tempDivX = myDivideNew(cellXpos,alpha);
+                tempDivY = myDivideNew(cellYpos,alpha);
+                cellMaxx = exp(tempDivX);
+                cellMinx = 1/(exp(tempDivX));
+                cellMaxy = exp(tempDivY);
+                cellMiny = 1/(exp(tempDivY));
+                double temp1;
+                double temp2;
+                temp1 = myDivideNew(cellMaxx,pinMaxx);
+                temp2 = myDivideNew(cellMinx,pinMinx);
+                gradX = (temp1)-(temp2);
+                double temp3;
+                double temp4;
+                temp3 = myDivideNew(cellMaxy,pinMaxy);
+                temp4 = myDivideNew(cellMiny,pinMiny);
+                gradY = (temp3)-(temp4);
+                grad[idx] = gradX;
+                grad[idx+1]=gradY;
+                //cout << "gradient value for cell: " << (*cellPtr).CellGetName() << "is" << gradX << endl;
+                idx=idx+2;
         }DESIGN_END_FOR;
 }
 
+
 void
-Design::DesignSolveForAllCellsWnnlp(void)
+Design::DesignSolveForAllCellsWnnlpNew(void)
 {
 bool debug = true;
 //extern int wn_nlp_verbose=3;
@@ -221,26 +183,18 @@ string DirName;
 
 //All variable declration for nlp solver X and Y component are solved seperately
 
+wn_sll constraint_list;
 
-wn_sll constraint_listX;
-wn_sll constraint_listY;
+wn_linear_constraint_type linear_constraint;
+wn_nonlinear_constraint_type nonlinear_constraint;
 
-wn_linear_constraint_type linear_constraintX,linear_constraintY;
-wn_nonlinear_constraint_type nonlinear_constraintX,nonlinear_constraintY;
+wn_nonlinear_constraint_type objective;
 
-wn_nonlinear_constraint_type objectiveX;
-wn_nonlinear_constraint_type objectiveY;
+uint i;
 
-uint iX;
-uint iY;
+int code;
 
-int codeX;
-int codeY;
-
-double val_minX;
-double val_minY;
-
-
+double val_min;
 
 // All initialization
 Env &DesignEnv = (*this).DesignEnv;
@@ -256,10 +210,7 @@ HYPERGRAPH_FOR_ALL_NODES(myGraph, nodeIdx, cellObj) {
         cellsToSolve.push_back((Cell *)cellObj);
 } HYPERGRAPH_END_FOR;
 
-
-
 inputCellCount = inputCells.size(); 
-
 
 /*Create Placeable blocks in the design*/
 DesignGetBoundingBox(maxx,maxy);
@@ -272,7 +223,7 @@ siteWidth = floor(((double)maxx) / numSites);
 rowHeight = averageClusterHeight;
 
 /* rameshul Debug*/
-if (!debug) { 
+if (debug) { 
         ulong lseHPWL;
         cout << "maxx " << maxx << " maxy " << maxy << endl;
         cout << "avgCluster Width " << averageClusterWidth << " avg Cluster Height" << averageClusterHeight << endl;
@@ -288,8 +239,8 @@ if (!debug) {
 /* Get all the variables to be solved for from the design class*/
 
 vector<Cell *> cellsToSolve;
-getNLPCellsToSolve ((*this),cellsToSolve);
-numVars= cellsToSolve.size();
+getNLPCellsToSolveNew ((*this),cellsToSolve);
+numVars= 2*(cellsToSolve.size());
 /*rameshul Debug -print the cells returned from the above function  
 
 Cell * cellsToSolvePtr; 
@@ -301,10 +252,9 @@ VECTOR_FOR_ALL_ELEMS(cellsToSolve,Cell *,cellsToSolvePtr){
 
 End Debug*/
 
-double x[numVars];
-double y[numVars];
+double values[numVars];
 /* Populate Initial Values of x and y*/
-nlpInitialValues(cellsToSolve,x,y);
+nlpInitialValuesNew(cellsToSolve,values);
 
 /* rameshul Debug for objective Functioni*/
 ulong wirelengthBeforeX;
@@ -334,86 +284,67 @@ rameshul End debug */
 
 /****************** Declaration of Objective for X and Y variables *****************************/
 
-wn_make_nonlinear_constraint(&nonlinear_constraintX,numVars,WN_EQ_COMPARISON);
-nonlinear_constraintX->pfunction = &wirelengthObjFuncX;
-nonlinear_constraintX->pgradient = &gradientFuncX;
-for(iX=0;iX<numVars;++iX)
+wn_make_nonlinear_constraint(&nonlinear_constraint,numVars,WN_EQ_COMPARISON);
+nonlinear_constraint->pfunction = &wirelengthObjFunc;
+nonlinear_constraint->pgradient = &gradientFunc;
+for(i=0;i<numVars;++i)
   {
-    (nonlinear_constraintX->vars)[iX] = iX;
+    (nonlinear_constraint->vars)[i] = i;
   }
-nonlinear_constraintX->client_data = this;
-objectiveX = nonlinear_constraintX;
+nonlinear_constraint->client_data = this;
+objective = nonlinear_constraint;
 
-wn_make_nonlinear_constraint(&nonlinear_constraintY,numVars,WN_EQ_COMPARISON);
+/*wn_make_nonlinear_constraint(&nonlinear_constraintY,numVars,WN_EQ_COMPARISON);
 nonlinear_constraintY->pfunction = &wirelengthObjFuncY;
-nonlinear_constraintY->pgradient = &gradientFuncY;
+//nonlinear_constraintY->pgradient = &gradientFuncY;
 for(iY=0;iY<numVars;++iY)
   {
     (nonlinear_constraintY->vars)[iY] = iY;
   }
 nonlinear_constraintY->client_data = this;
-objectiveY = nonlinear_constraintY;
+objectiveY = nonlinear_constraintY;*
 
 
 /***************** Declaration of constraints for solving x and y part of the nonlinear problem **************/
-constraint_listX = NULL;
-//constraint 1 - set minimum value of x
-for (iX=0;iX<numVars;++iX){
-        wn_make_linear_constraint(&linear_constraintX,1,0.0,WN_GT_COMPARISON);
-        (linear_constraintX->vars)[0] = iX;
-        (linear_constraintX->weights)[0] = 1.0;
-        wn_sllins(&constraint_listX,linear_constraintX);
+constraint_list = NULL;
+//constraint 1 - set minimum value of x and y
+for (i=0;i<numVars;++i){
+        wn_make_linear_constraint(&linear_constraint,1,0.0,WN_GT_COMPARISON);
+        (linear_constraint->vars)[0] = i;
+        (linear_constraint->weights)[0] = 1.0;
+        wn_sllins(&constraint_list,linear_constraint);
 }
 //constraint 2 - set maximum value of x
 
-for (iX=0;iX<numVars;++iX){
-        wn_make_linear_constraint(&linear_constraintX,1,maxx,WN_LT_COMPARISON);
-        (linear_constraintX->vars)[0] = iX;
-        (linear_constraintX->weights)[0] = 1.0;
-        wn_sllins(&constraint_listX,linear_constraintX);
+for (i=0;i<numVars;i=i+2){
+        wn_make_linear_constraint(&linear_constraint,1,maxx,WN_LT_COMPARISON);
+        (linear_constraint->vars)[0] = i;
+        (linear_constraint->weights)[0] = 1.0;
+        wn_sllins(&constraint_list,linear_constraint);
 }
 
-constraint_listY = NULL;
-//constraint 1 - set minimum value of y
-for (iY=0;iY<numVars;++iY){
-        wn_make_linear_constraint(&linear_constraintY,1,0.0,WN_GT_COMPARISON);
-        (linear_constraintY->vars)[0] = iY;
-        (linear_constraintY->weights)[0] = 1.0;
-        wn_sllins(&constraint_listY,linear_constraintY);
-}
+
 //constraint 2 - set maximum value of y
 
-for (iY=0;iY<numVars;++iY){
-        wn_make_linear_constraint(&linear_constraintY,1,maxy,WN_LT_COMPARISON);
-        (linear_constraintY->vars)[0] = iY;
-        (linear_constraintY->weights)[0] = 1.0;
-        wn_sllins(&constraint_listY,linear_constraintY);
+for (i=1;i<numVars;i=i+2){
+        wn_make_linear_constraint(&linear_constraint,1,maxy,WN_LT_COMPARISON);
+        (linear_constraint->vars)[0] = i;
+        (linear_constraint->weights)[0] = 1.0;
+        wn_sllins(&constraint_list,linear_constraint);
 }
 
 
 
 /***** JUST a try with the deltaX ****/
 
-double *deltaX;
-double *deltaY;
-/*double deltaX[numVars];
-double deltaY[numVars];
+double *delta=NULL;
+/*double delta[numVars];
 
 // wn_make_vect(&deltaX,numVars);
-for(iX=0;iX<numVars;++iX)
+for(i=0;i<numVars;++i)
  {
-   deltaX[iX] = 0.0001;
- }
-
-// wn_make_vect(&deltaY,numVars);
-for(iY=0;iY<numVars;++iY)
- {
-   deltaY[iY] = 0.0001;
+   delta[i] = 0.0001;
  }*/
-
-
-
-            
 
 
 
@@ -421,18 +352,15 @@ for(iY=0;iY<numVars;++iY)
 
 // For X coordinates
 //Commented for compiling
-wn_nlp_conj_method(&codeX,&val_minX,x,deltaX,(wn_nonlinear_constraint_type)objectiveX,constraint_listX,numVars,numVars,10,1.0);
+wn_nlp_conj_method(&code,&val_min,values,delta,(wn_nonlinear_constraint_type)objective,constraint_list,numVars,numVars,10,1.0);
 
-//For Y coordinates
-//commented for compiling
-wn_nlp_conj_method(&codeY,&val_minY,y,deltaY,(wn_nonlinear_constraint_type)objectiveY,constraint_listY,numVars,numVars,10,1.0);
-
-cout << " Final X value after minimization is: " << val_minX << "\t Final Y value: " << val_minY << " codeX: " <<codeX <<" codeY: "<<codeY<<endl;   
+cout << " Final HPWL value after minimization is: " << val_min << " code: " <<code <<endl;   
 
 
 for(int i=0;i<numVars;++i){
 
-        cout << "Final X: " <<x[i]<<" Final Y: "<<y[i]<<endl;
+        cout << "Final X: " <<values[i]<<" Final Y: "<<values[i+1]<<endl;
+        i=i+1;
 }
 
 }
