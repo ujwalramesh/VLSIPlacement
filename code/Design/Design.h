@@ -22,6 +22,7 @@
 # include <ConjGradSolver.h>
 # include <PriorityQueue.h>
 # include <FDP.h>
+# include <Grid.h>
 # include <metis.h>
 
 # define MAX_PATHS 1000000
@@ -219,6 +220,7 @@ class Design {
   uint NumCells;
   uint NumClustersSeenSofar;
   uint NumClusters;
+  uint NumGridPoints;
   uint NumStdCells;
   uint NumMacroCells;
   uint NumFixedCells;
@@ -364,6 +366,14 @@ class Design {
   map<string, Cell*> DesignClusters;
   map<string, Net*> DesignNets;
   map<string, Net*> DesignHiddenNets;
+  /* rameshul Included - Grid Creation Functions*/
+  map<string, Grid*> DesignGridPoints; 
+  void DesignCreateGridPoints(uint);
+  void DesignAddOneGridToDesignDB(Grid *);
+  map<string, Grid*>& DesignGetGridPoints(void);
+  void DesignUpdateGridPotentials(void);
+  double DesignComputeTotalDensityPenalty(void);
+  /* End include*/
   vector<Path*> DesignPaths;
   vector<PhysRow*> DesignPhysRows;
   vector<Bin *> DesignBins;

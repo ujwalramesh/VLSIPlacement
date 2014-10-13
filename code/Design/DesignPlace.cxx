@@ -363,6 +363,9 @@ Design::DesignRunInternalPlacer(EnvSolverType solverType)
   finalOutputName = DesignName + "postMP";
   string MPlacerLogFile = DesignName + "_shaping_log";
   netModel = DesignEnv.EnvGetNetModel();
+  uint numpoints = 10;
+    string gName ;
+    Grid *gPtr;
   
   switch (solverType) {
   case ENV_SOLVER_QUADRATIC_MOSEK:
@@ -380,22 +383,38 @@ Design::DesignRunInternalPlacer(EnvSolverType solverType)
     } else if (netModel == ENV_STAR_MODEL) {
     } else if (netModel == ENV_HYBRID_MODEL) {
     }*/
+
+    /************ rameshul Included*************/
+    // The below function creates grid points which are required for the density constraint for the non linear solver
+    /* Dividing the placement region into 10*10 grid points to start with*/
+    /*Justification -- The density penalty is used to place only clusters and there are a maximum of 100 clusters only */
+    /*Increasing the Number of Grid Points will increase run time*/
+    /* Grid points created based on maxx and maxy*/
+    DesignCreateGridPoints(numpoints);  
+    DESIGN_FOR_ALL_GRID_POINTS((*this),gName,gPtr){
+            cout << "Gridname: "<<gName<<" GridXpos: " <<(*gPtr).GridGetgridX();
+            cout << " GridYpos: "<<(*gPtr).GridGetgridY()<<" gridPot: " << (*gPtr).GridGetgridPotential()<< endl;
+    }DESIGN_END_FOR;
+
     cout << "Begin Non Linear Solver" << endl;
     DesignSolveForAllCellsWnnlpNew();
-    /************** rameshul inserted************/
+    DESIGN_FOR_ALL_GRID_POINTS((*this),gName,gPtr){
+            cout << "Gridname: "<<gName<<" GridXpos: " <<(*gPtr).GridGetgridX();
+            cout << " GridYpos: "<<(*gPtr).GridGetgridY()<<" gridPot: " << (*gPtr).GridGetgridPotential()<< endl;
+    }DESIGN_END_FOR;
     /************** No Justification to flow, Just copied from below **********/
     /************* Comment upto End trial if flow fails ******/
 
     //ProfilerStart("ClusterSwapping");
-    //DesignDoClusterSwapping();
+    DesignDoClusterSwapping();
     //ProfilerStop();
-    DesignFillCellsInCluster();
-    //DesignDoClusterFlipping();
+           DesignFillCellsInCluster();
+    DesignDoClusterFlipping();
 
     /*************************************/
     /***      BEGIN SHAPING FLOW      ***/
     /************************************/
-    DesignDoClusterShaping();
+          DesignDoClusterShaping();
     DesignComputeHPWL();
     cout << "BEFORE FLOORPLANNING HPWL : " << DesignGetHPWL() << endl;
     changeDir("inputShaping");

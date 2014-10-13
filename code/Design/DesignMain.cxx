@@ -37,6 +37,14 @@ map<string,Cell*>& Design::DesignGetCells(void)
   return (retVal);
 }
 
+/*rameshul Include*/
+map<string,Grid*>& Design::DesignGetGridPoints(void)
+{
+  map<string, Grid*>& retVal = this->DesignGridPoints;
+  return (retVal);
+
+}
+
 map<string,Cell*>& Design::DesignGetClusters(void)
 {
   map<string, Cell*>& retVal = this->DesignClusters;
@@ -129,6 +137,19 @@ Design::DesignAddOneClusterToDesignDB(Cell *clusterCell)
     this->NumClusters++;
   }
 }
+
+void
+Design::DesignAddOneGridToDesignDB(Grid *GridPoint)
+{
+        string GridName;
+        GridName = (*GridPoint).GridGetName();
+
+        _KEY_DOES_NOT_EXIST(DesignGridPoints, GridName) {
+                DesignGridPoints[GridName]=GridPoint;
+                this->NumGridPoints++;
+        }
+}
+
 
 void
 Design::DesignAddOneNetToDesignDB(Net *newNet, double Weight)
@@ -1863,6 +1884,7 @@ Design::DesignInit()
   NumMaxPins = 0;
   maxx = -INT_MAX;
   maxy = -INT_MAX;
+  NumGridPoints =0;
 
   singleRowHeight = -1;
   singleSiteWidth = 0;
@@ -2003,6 +2025,15 @@ Design::DesignComputeLseYHPWL()
   return totalLseYHPWL; 
 }
 
+void
+DesignUpdateGridPotentials(void) 
+{
+
+
+
+
+
+}
 
 Design::Design() 
 {

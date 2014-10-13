@@ -62,6 +62,7 @@ VECTOR_FOR_ALL_ELEMS(cellsToSolve,Cell *, cellPtr){
 
 }
 
+
 double
 wirelengthObjFunc(int size, double *values,ptr myDesign) /* Need to justify size, values and client_data. Just reused it from definition of pfunction*/
 {
@@ -80,9 +81,14 @@ wirelengthObjFunc(int size, double *values,ptr myDesign) /* Need to justify size
         }END_FOR;
         ulong LseHPWL;
         LseHPWL = (*((Design*)myDesign)).DesignComputeLseHPWL();
+   /*Adding penalty function for density constraint as per Will Naylor's patent*/
+    double totalDensityPenalty=0;
+    (*((Design*)myDesign)).DesignUpdateGridPotentials();
+    totalDensityPenalty =(*((Design*)myDesign)).DesignComputeTotalDensityPenalty();
         double rtv;
-        rtv = LseHPWL;
-        //cout << "ulong wirelength is: " << xHPWL <<endl;
+        rtv = LseHPWL+totalDensityPenalty;
+   //     cout << "ulong wirelength is: " << LseHPWL <<endl;
+    //    cout << "Density Penalty is : " << totalDensityPenalty<<endl;
         return rtv;
 }
         
@@ -228,10 +234,10 @@ if (debug) {
         cout << "maxx " << maxx << " maxy " << maxy << endl;
         cout << "avgCluster Width " << averageClusterWidth << " avg Cluster Height" << averageClusterHeight << endl;
         /* For loop to display cell information of all input cells*/
-       printAllVisibleCellsInDesign((*this),"nlp_cells"); 
+      // printAllVisibleCellsInDesign((*this),"nlp_cells"); 
        lseHPWL=DesignComputeLseHPWL();
        cout << "LSE HPWL of Visible cells is : " << lseHPWL << endl;
-       printVisibleCellsineachCluster((*this),"nlp_cluster");
+      // printVisibleCellsineachCluster((*this),"nlp_cluster");
 }
 /*End Debug*/
 
@@ -256,15 +262,15 @@ double values[numVars];
 /* Populate Initial Values of x and y*/
 nlpInitialValuesNew(cellsToSolve,values);
 
-/* rameshul Debug for objective Functioni*/
+/* rameshul Debug for objective Function
 ulong wirelengthBeforeX;
 wirelengthBeforeX = (*this).DesignComputeLseXHPWL();
 cout << "Wirelength X  before changing  is: " << wirelengthBeforeX << endl;
 ulong wirelengthBeforeY;
 wirelengthBeforeY = (*this).DesignComputeLseYHPWL();
 cout << "Wirelength Y  before changing  is: " << wirelengthBeforeY << endl;
-/*double wirelengthTempX;
-wirelengthTempX = wirelengthObjFuncX(numVars,x,this);  // was just a check to call function
+double wirelengthTempX;
+wirelengthTempX = wirelengthObjFunc(numVars,values,this);  // was just a check to call function
 cout << "Temporary X  Wirelength is: " << wirelengthTempX << endl; 
 double wirelengthTempY;
 wirelengthTempY = wirelengthObjFuncY(numVars,y,this);  // was just a check to call function
@@ -354,8 +360,8 @@ for(i=0;i<numVars;++i)
 //Commented for compiling
 wn_nlp_conj_method(&code,&val_min,values,delta,(wn_nonlinear_constraint_type)objective,constraint_list,numVars,numVars,10,1.0);
 
-cout << " Final HPWL value after minimization is: " << val_min << " code: " <<code <<endl;   
-
+cout << " Final value after minimization is: " << val_min << " code: " <<code <<endl;   
+cout << "Final HPWL after minimization is: " <<  (*this).DesignComputeLseHPWL()<<endl;
 
 for(int i=0;i<numVars;++i){
 

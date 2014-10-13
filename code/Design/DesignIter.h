@@ -29,6 +29,15 @@
   CellName = mapIter->first;						\
   ClusterCellPtr = mapIter->second;					\
 
+/* Use this to Iterate over all grid points in the Design*/
+# define DESIGN_FOR_ALL_GRID_POINTS(Design, GridName,Gridptr)                         \
+        {                                                                             \
+                map<string, Grid*> &DesignGridPts = Design.DesignGetGridPoints();  \
+                map<string, Grid*>::iterator gridIter;                                \
+                for (gridIter = DesignGridPts.begin(); gridIter != DesignGridPts.end();gridIter++) {   \
+                        GridName = gridIter->first;                                   \
+                        Gridptr = gridIter->second;                                   \
+
 /* Use this iterator if you want to see all the cells in the design */
 # define DESIGN_FOR_ALL_CELLS_HIDDEN(Design, CellName, CellPtr)		\
   {									\
