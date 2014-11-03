@@ -430,6 +430,8 @@ parseArgsAndAddToEnv(string switchName, string switchValue, Env &topEnv)
       topEnv.EnvSetSolverType(ENV_SOLVER_FORCE_DIRECTED);
     } else if (switchValue == "nlp") {
       topEnv.EnvSetSolverType(ENV_SOLVER_NON_LINEAR);
+    } else if (switchValue == "minlp") {
+      topEnv.EnvSetSolverType(ENV_SOLVER_MI_NON_LINEAR);
     } else {
       rtv = false;
     }

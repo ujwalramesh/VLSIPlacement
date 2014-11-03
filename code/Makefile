@@ -12,13 +12,17 @@ STATIC_LIB_PATH=/home/rameshul/thesis/VLSIPlacement/wnlib/acc/text.a
 #LIBSOOQP= -lblas -lgfortran -lprofiler 
 #changed by rameshul
 LIBSOOQP= -lblas -lgfortran  
-
+ADDINCFLAGS=/home/rameshul/Bonmin-1.7/include/coin
 
 LIBQUADPROG= #-lQuadProgpp
 LIBMOSEK= #-lmosek64
 
 #LIBS= ./libs/text.a -L/usr/local/lib -lc -ldl -lm $(LIBMOSEK) $(LIBQUADPROG) $(LIBSOOQP)
 LIBS= -L/usr/local/lib -lc -ldl -lm $(LIBMOSEK) $(LIBQUADPROG) $(LIBSOOQP)
+MYLIBS= -L/home/rameshul/Bonmin-1.7/lib  
+LD_LIBRARY_PATH= -L/home/rameshul/Bonmin-1.7/lib  
+#MYBONPKG= -L/home/rameshul/Bonmin-1.7/lib -lPkg  
+#MYBONPKG= `PKG_CONFIG_PATH=/home/rameshul/Bonmin-1.7/lib/pkgconfig:/usr/bin/pkg-config -libs pkg`
 
 SRCDIRS:= Pin Cell Net Design HyperGraph common Stat PhysData \
 	Flags Legalize TimingModels Bin \
@@ -33,12 +37,33 @@ ifeq ($(MAKECMDGOALS), debug)
 	OBJFILES:= $(SRCDIRS:=-g)
 	DEBUG = debug
 else
-	CFLAGS= -O3 -Wuninitialized #-pg
+	CFLAGS= -O3 -Wuninitialized -w -pipe -DNDEBUG -Wparentheses -Wreturn-type -Wcast-qual -Wall -Wpointer-arith -Wwrite-strings -Wconversion -Wno-unknown-pragmas 
+        CXXLINKFLAGS=  -wl,--rpath -Wl,/home/rameshul/Bonmin-1.7/lib
 endif
 OBJFILES:= $(OBJFILES:=.o)
 OBJFILES:= $(addprefix $(OBJDIR)/, $(OBJFILES))
 
+
+
+#### Below variables required to interface bonmin correctly######
+LBZ2= -L/usr/lib/x86_64-linux-gnu -lbz2
+LAPACK= -L/usr/lib -llapack
+LIBZ= -L/usr/lib/x86_64-linux-gnu -lz
+
+BONMINLIB=/home/rameshul/Bonmin-1.7/lib
+BONSTLIB= $(wildcard $(BONMINLIB)/*.so)
+null= 
+BONLIBSUFFIX= $(null) -lm
+BONLIBPREFIX= -L$(BONMINLIB)$(null) -
+BONLIBNAMES= $(BONSTLIB:/home/rameshul/Bonmin-1.7/lib/lib%=l%)
+BONLIBS= $(patsubst %.so,%,$(BONLIBNAMES))
+BONFILES:= $(addprefix $(BONLIBPREFIX),$(BONLIBS))
+#BONFILES:= $(addsuffix $(BONLIBSUFFIX),$(BONFILES))
+
+
+
 export CFLAGS
+export LD_LIBRARY_PATH 
 
 LFLAGS= 
 
@@ -59,18 +84,24 @@ all-g: COMPILE_ALL GEN_EXEC-g
 
 COMPILE_ALL: $(SRCDIRS)
 	echo $(OBJDIR)
+	echo $(BONFILES)
 	@+for dir in $(SRCDIRS); do \
 		make $(DEBUG) -C $$dir; \
 	done	
-
-GEN_EXEC: main.cxx $(OBJFILES) 
+     
+GEN_EXEC: main.cxx $(OBJFILES)   
 #	$(CC) -c main.cxx -o $(OBJDIR)/main.o -I $(INCLUDE_DIR)
 #	$(CC) -c variables.cxx -o $(OBJDIR)/variables.o -I $(INCLUDE_DIR)
-#	ld -r $(OBJDIR)/main.o $(OBJDIR)/variables.o ./libs/libhmetis.a -o $(OFILE)
-	$(CC) $(CFLAGS) $(LFLAGS) $(OBJFILES) main.cxx variables.cxx -o $(OFILE) -I $(INCLUDE_DIR) $(LIBS) $(STATIC_LIB_PATH) -lm 
+#	ld -r $(CXXLINKFLAGS) -I $(ADDINCFLAGS) -o $(OBJDIR)/main.o 
+	$(CC) $(CFLAGS) $(LFLAGS) $(OBJFILES) -I $(ADDINCFLAGS) main.cxx variables.cxx -o $(OFILE) -I $(INCLUDE_DIR) $(BONFILES) $(LIBS) $(STATIC_LIB_PATH) -lm $(LBZ2) $(LAPACK) $(LIBZ) 
+#	$(CC) $(CFLAGS) $(LFLAGS) $(OBJFILES)  main.cxx variables.cxx -o $(OFILE) -I $(INCLUDE_DIR) $(BONFILES) $(LIBS) $(STATIC_LIB_PATH) -lm  
 
 GEN_EXEC-g: main.cxx $(OBJFILES) 
-	$(CC) $(CFLAGS) -g $(LFLAGS) $(OBJFILES) main.cxx variables.cxx -o $(OFILE) -I $(INCLUDE_DIR) $(LIBS) $(STATIC_LIB_PATH) -lm
+	$(CC) $(CFLAGS) -g $(LFLAGS) $(OBJFILES) -I $(ADDINCFLAGS) main.cxx variables.cxx -o $(OFILE) -I $(INCLUDE_DIR) $(BONFILES) $(LIBS) $(STATIC_LIB_PATH) -lm $(LBZ2) $(LAPACK) $(LIBZ)
+
+
+#$(OBJDIR)/main.o:    
+#	ld -r $(MYLIBS) -I $(ADDINCFLAGS) -o $(OBJDIR)/main.o
 
 tag: 	
 	ctags . -R $(CODE_ROOT)

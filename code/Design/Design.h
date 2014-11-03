@@ -24,6 +24,7 @@
 # include <FDP.h>
 # include <Grid.h>
 # include <metis.h>
+#include  "BonTMINLP.hpp"
 
 # define MAX_PATHS 1000000
 
@@ -212,7 +213,9 @@ class scoreCmpTypeUint {
   }
 };
 
-class Design {
+using namespace Ipopt;
+using namespace Bonmin;
+class Design : public TMINLP { 
  private:
   Env DesignEnv;
   map<uint, uint>RowHeights;
@@ -484,7 +487,7 @@ class Design {
   /*Included by rameshul*/
   void DesignSolveForAllCellsWnnlp(void);      
   void DesignSolveForAllCellsWnnlpNew(void);      
-
+  void DesignSolveForAllCellsMINLP(void);
   /* Calling internal and external placers */
   void DesignRunExternalPlacer(EnvGlobalPlacerType, EnvFlatPlacerType);
   void DesignRunInternalPlacer(EnvSolverType);
@@ -643,6 +646,47 @@ class Design {
   uint DesignGetILRMultiple(void);
   bool DesignGetBinsCreated(void);
 
+  /* rameshul inserted
+  The below virtual functions are defined to invoke Bonmin MINLP. example to this invoking was taken from the below path
+  /home/rameshul/Bonmin-1.7/Bonmin/examples/CppExample/MyTMINLP.hpp*/
+  virtual bool get_variables_types(Index n, VariableType* var_types);
+
+  virtual bool get_variables_linearity(Index n, Ipopt::TNLP::LinearityType* var_types);
+
+  virtual bool get_constraints_linearity(Index m, Ipopt::TNLP::LinearityType* const_types);
+
+  virtual bool get_nlp_info(Index& n, Index&m, Index& nnz_jac_g,Index& nnz_h_lag, TNLP::IndexStyleEnum& index_style);
+
+  virtual bool get_bounds_info(Index n, Number* x_l, Number* x_u,Index m, Number* g_l, Number* g_u);
+
+   virtual bool get_starting_point(Index n, bool init_x, Number* x,
+                                bool init_z, Number* z_L, Number* z_U,
+                                Index m, bool init_lambda,
+                                Number* lambda);
+   
+   virtual bool eval_f(Index n, const Number* x, bool new_x, Number& obj_value);
+
+   virtual bool eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f);
+
+   virtual bool eval_g(Index n, const Number* x, bool new_x, Index m, Number* g);
+
+   virtual bool eval_jac_g(Index n, const Number* x, bool new_x,
+                        Index m, Index nele_jac, Index* iRow, Index *jCol,
+                        Number* values);
+
+   virtual bool eval_h(Index n, const Number* x, bool new_x,
+                        Number obj_factor, Index m, const Number* lambda,
+                        bool new_lambda, Index nele_hess, Index* iRow,
+                        Index* jCol, Number* values);
+
+   virtual void finalize_solution(TMINLP::SolverReturn status,
+                                Index n, const Number* x, Number obj_value);
+
+   virtual const SosInfo * sosConstraints() const{return NULL;}
+   virtual const BranchingInfo* branchingInfo() const{return NULL;}
+   virtual ~Design() {} ;
+  /* rameshul end of function insertion*/             
+        
   /* Miscellaneous utility functions */
   vector<Cell *> DesignGetCellsOfBin(Bin *binPtr, uint, uint, uint, uint, 
 				     vector<Cell *> &, vector<Cell *> &, 
@@ -698,4 +742,8 @@ extern vector<Cell*> DesignGetConnectedCells(HyperGraph &, Cell *);
 /* rameshul Inserted*/ 
 extern void printAllVisibleCellsInDesign(Design& myDesign,string fname);
 extern void printVisibleCellsineachCluster ( Design& myDesign, string fname);
+
+/* rameshul inserted to make functions of wnnlp visible to Bonmin*/
+extern void getNLPCellsToSolveNew(Design &myDesign,vector<Cell *> &cellsToSolve);
+extern double myDivideNew(double num, double denom); 
 #endif

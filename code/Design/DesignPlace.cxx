@@ -437,12 +437,36 @@ Design::DesignRunInternalPlacer(EnvSolverType solverType)
     cout << " In consrtuction -- Exiting" << endl;
     
     break;
-  case ENV_SOLVER_NON_LINEAR_CONJ_GRAD:
-    if (netModel == ENV_CLIQUE_MODEL) {
-    } else if (netModel == ENV_STAR_MODEL) {
-    } else if (netModel == ENV_HYBRID_MODEL) {
-    }
-    cout << "Solver not ready yet!" << endl;
+  case ENV_SOLVER_MI_NON_LINEAR:
+     cout << "Mixed Integer Nonlinear Solver is invoked!" << endl;
+     DesignSolveForAllCellsMINLP();
+    DesignDoClusterSwapping();
+    //ProfilerStop();
+           DesignFillCellsInCluster();
+    DesignDoClusterFlipping();
+
+    /*************************************/
+    /***      BEGIN SHAPING FLOW      ***/
+    /************************************/
+          DesignDoClusterShaping();
+    DesignComputeHPWL();
+    cout << "BEFORE FLOORPLANNING HPWL : " << DesignGetHPWL() << endl;
+    changeDir("inputShaping");
+    DesignWriteBookShelfOutput((*this), DesignName, true);
+    changeDir("..");
+    DesignRunMetaPlacerCapo("forShaping", DesignName, 1, 1, 0, MPlacerLogFile);
+    changeDir("afterMP");
+    DesignWriteBookShelfOutput((*this), DesignName);
+    changeDir("..");
+    DesignComputeHPWL();
+    cout << "AFTER FLOORPLANNING HPWL : " << DesignGetHPWL() << endl;
+    DesignResetOrientations();
+    DesignWriteBookShelfOutput((*this), finalOutputName);
+
+    DesignComputeHPWL();
+    cout << "AFTER RESET ORIENTATIONS HPWL : " << DesignGetHPWL() << endl;
+   /*************** End Trial**************/
+
     break;
   case ENV_SOLVER_FORCE_DIRECTED:
     DesignSolveForAllCellsForceDirected();

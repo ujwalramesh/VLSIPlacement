@@ -2035,6 +2035,7 @@ DesignUpdateGridPotentials(void)
 
 }
 
+
 Design::Design() 
 {
   DesignInit();
@@ -2047,4 +2048,8 @@ Design::Design(string DesignPath, string DesignName, Env &designEnv)
   DesignSetEnv(designEnv);
   DesignReadDesign(DesignPath, DesignName);
 }
+
+Bonmin::TMINLP::TMINLP(){}
+Bonmin::TMINLP::~TMINLP(){}
+
 

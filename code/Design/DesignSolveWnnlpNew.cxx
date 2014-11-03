@@ -7,7 +7,7 @@
 #include "wnlib/wnnlp.h"
 #include <typeinfo>
 
-local double myDivideNew(double num, double denom) 
+double myDivideNew(double num, double denom) 
 {
         if (denom <= 0.0)
         {
@@ -31,6 +31,7 @@ Cell *cellPtr;
 string cellName;
 
 DESIGN_FOR_ALL_CELLS(myDesign,cellName,cellPtr){
+        if ((*cellPtr).CellIsTerminal()) continue;
         cellsToSolve.push_back(cellPtr);
 }DESIGN_END_FOR;
 
@@ -45,7 +46,7 @@ string cellName;
 uint idx=0;
 
 int size = cellsToSolve.size();
-//cout << "Size of cells: " << size << endl;
+cout << "Size of cells: " << size << endl;
 //map<uint, Cell *> cellToSolveMap;
 
 //map<uint, Cell *>::iterator cellToSolveMapItr; 
@@ -72,7 +73,8 @@ wirelengthObjFunc(int size, double *values,ptr myDesign) /* Need to justify size
   uint idx=0;
         //cout << " Void pointer Type: " <<typeid(*((Design*)myDesign)).name() << endl;  
         DESIGN_FOR_ALL_CELLS((*((Design*)myDesign)),cellName,cellPtr){
-//                cout << "Changing Xposition for cell: " << (*cellPtr).CellGetName() << " to " << values[idx] << endl; 
+//                cout << "Changing Xposition for cell: " << (*cellPtr).CellGetName() << " to " << values[idx] << endl;
+                   if ((*cellPtr).CellIsTerminal()) continue;     
                 (*cellPtr).CellSetXposDbl(values[idx]);
                 (*cellPtr).CellSetYposDbl(values[idx+1]);
   //              cout << "The new Xposition of the cell is " << (*cellPtr).CellGetXpos() << endl;
@@ -103,6 +105,7 @@ gradientFunc(double *grad,int size,double *values,ptr myDesign)
         uint cellXpos;  
         uint cellYpos;
         DESIGN_FOR_ALL_CELLS((*((Design*)myDesign)),cellName,cellPtr){
+                if ((*cellPtr).CellIsTerminal()) continue;
                 double gradX=0;
                 double gradY=0;
                 double cellMaxx;
@@ -170,6 +173,7 @@ Cell *clusterCellPtr;
 vector<Cell *> clusterCells;
 double clusterXpos,clusterYpos;
 uint maxx,maxy;
+uint constMaxx,constMaxy;
 ulong lseXHPWL,lseYHPWL;
 uint averageClusterWidth,averageClusterHeight;
 uint numClusters,numRows,numSites;
@@ -220,13 +224,38 @@ inputCellCount = inputCells.size();
 
 /*Create Placeable blocks in the design*/
 DesignGetBoundingBox(maxx,maxy);
+
 averageClusterWidth = (uint)DesignGetAverageClusterCellWidth();
 averageClusterHeight = (uint)DesignGetAverageClusterCellHeight();
+
 numClusters = DesignGetNumClusters();
 numRows = floor(((double)maxy) / averageClusterHeight);
 numSites = ceil(((double)numClusters) / numRows);
 siteWidth = floor(((double)maxx) / numSites);
 rowHeight = averageClusterHeight;
+constMaxx = maxx -  averageClusterWidth;
+constMaxy = maxy - averageClusterHeight;  
+
+uint siteNum,rowNum;
+/* Place Clusters Constructively*/ 
+siteNum = 0;
+rowNum = 0;
+uint count = 0;
+DESIGN_FOR_ALL_CLUSTERS((*this), cellName, clusterCellPtr) {
+        clusterXpos = siteNum * siteWidth;
+        clusterYpos = rowNum * rowHeight;
+        (*clusterCellPtr).CellSetXpos(clusterXpos); 
+        siteNum++;
+        (*clusterCellPtr).CellSetYpos(clusterYpos); 
+        if (siteNum == numSites) {
+             siteNum = 0;
+             rowNum++;
+        }   
+        clusterCells.push_back(clusterCellPtr);
+        count++;
+} DESIGN_END_FOR;
+
+
 
 /* rameshul Debug*/
 if (debug) { 
@@ -323,7 +352,7 @@ for (i=0;i<numVars;++i){
 //constraint 2 - set maximum value of x
 
 for (i=0;i<numVars;i=i+2){
-        wn_make_linear_constraint(&linear_constraint,1,maxx,WN_LT_COMPARISON);
+        wn_make_linear_constraint(&linear_constraint,1,constMaxx,WN_LT_COMPARISON);
         (linear_constraint->vars)[0] = i;
         (linear_constraint->weights)[0] = 1.0;
         wn_sllins(&constraint_list,linear_constraint);
@@ -333,7 +362,7 @@ for (i=0;i<numVars;i=i+2){
 //constraint 2 - set maximum value of y
 
 for (i=1;i<numVars;i=i+2){
-        wn_make_linear_constraint(&linear_constraint,1,maxy,WN_LT_COMPARISON);
+        wn_make_linear_constraint(&linear_constraint,1,constMaxy,WN_LT_COMPARISON);
         (linear_constraint->vars)[0] = i;
         (linear_constraint->weights)[0] = 1.0;
         wn_sllins(&constraint_list,linear_constraint);
@@ -350,8 +379,8 @@ double *delta=NULL;
 for(i=0;i<numVars;++i)
  {
    delta[i] = 0.0001;
- }*/
-
+ }
+*/
 
 
 /**************** Call the conjugate gradient minimizer ******************************/
