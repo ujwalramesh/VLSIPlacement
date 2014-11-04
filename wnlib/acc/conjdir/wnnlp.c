@@ -29,6 +29,7 @@ COPYRIGHT NOTICE:
 #define DISPLAY        FALSE
 
 
+
 int wn_nlp_verbose;
 
 local int count;

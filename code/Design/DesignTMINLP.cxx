@@ -180,8 +180,8 @@ bool Design::eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f){
         string cellName;
         uint alpha = 500;
         uint idx=0;
-        uint cellXpos;
-        uint cellYpos;
+        double cellXpos;
+        double cellYpos;
         DESIGN_FOR_ALL_CELLS((*this),cellName,cellPtr){
                 if ((*cellPtr).CellIsTerminal()) continue;
                 double gradX=0;
@@ -190,8 +190,8 @@ bool Design::eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f){
                 double cellMinx;
                 double cellMaxy;
                 double cellMiny;
-                cellXpos = (*cellPtr).CellGetXpos();
-                cellYpos = (*cellPtr).CellGetYpos();
+                cellXpos = (*cellPtr).CellGetXposDbl();
+                cellYpos = (*cellPtr).CellGetYposDbl();
                 Net *netPtr;
                 double sumPinsPos;
                 double pinMaxx;
@@ -200,8 +200,8 @@ bool Design::eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f){
                 double pinMiny;
                 double tempDivideX;
                 double tempDivideY;
-                uint pinXpos;
-                uint pinYpos;
+                double pinXpos;
+                double pinYpos;
                 CELL_FOR_ALL_NETS_NO_DIR((*cellPtr),netPtr){
                         Pin *pinPtr;
                         NET_FOR_ALL_PINS((*netPtr),pinPtr){

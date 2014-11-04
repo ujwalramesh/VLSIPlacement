@@ -67,7 +67,8 @@ VECTOR_FOR_ALL_ELEMS(cellsToSolve,Cell *, cellPtr){
 double
 wirelengthObjFunc(int size, double *values,ptr myDesign) /* Need to justify size, values and client_data. Just reused it from definition of pfunction*/
 {
-  /* objective here is total_wirelength = sum over all nets ( wirelength (net) * net weight) */ 
+  /* objective here is total_wirelength = sum over all nets ( wirelength (net) * net weight) */
+  static int objIterationCount=0;
   Cell *cellPtr;
   string cellName;
   uint idx=0;
@@ -85,25 +86,26 @@ wirelengthObjFunc(int size, double *values,ptr myDesign) /* Need to justify size
         LseHPWL = (*((Design*)myDesign)).DesignComputeLseHPWL();
    /*Adding penalty function for density constraint as per Will Naylor's patent*/
     double totalDensityPenalty=0;
-    (*((Design*)myDesign)).DesignUpdateGridPotentials();
-    totalDensityPenalty =(*((Design*)myDesign)).DesignComputeTotalDensityPenalty();
+   // (*((Design*)myDesign)).DesignUpdateGridPotentials();
+   // totalDensityPenalty =(*((Design*)myDesign)).DesignComputeTotalDensityPenalty();
         double rtv;
         rtv = LseHPWL+totalDensityPenalty;
    //     cout << "ulong wirelength is: " << LseHPWL <<endl;
     //    cout << "Density Penalty is : " << totalDensityPenalty<<endl;
+    objIterationCount++;
         return rtv;
 }
         
 void 
 gradientFunc(double *grad,int size,double *values,ptr myDesign)
 {
-
+        static int gradIterationCount=0;
         Cell *cellPtr;
         string cellName;
         uint alpha = 500;
         uint idx=0;
-        uint cellXpos;  
-        uint cellYpos;
+        double cellXpos;  
+        double cellYpos;
         DESIGN_FOR_ALL_CELLS((*((Design*)myDesign)),cellName,cellPtr){
                 if ((*cellPtr).CellIsTerminal()) continue;
                 double gradX=0;
@@ -112,8 +114,8 @@ gradientFunc(double *grad,int size,double *values,ptr myDesign)
                 double cellMinx;
                 double cellMaxy;
                 double cellMiny;
-                cellXpos = (*cellPtr).CellGetXpos();
-                cellYpos = (*cellPtr).CellGetYpos();
+                cellXpos = (*cellPtr).CellGetXposDbl();
+                cellYpos = (*cellPtr).CellGetYposDbl();
                 Net *netPtr;
                 double sumPinsPos;
                 double pinMaxx;
@@ -122,8 +124,8 @@ gradientFunc(double *grad,int size,double *values,ptr myDesign)
                 double pinMiny;
                 double tempDivideX;
                 double tempDivideY;
-                uint pinXpos;
-                uint pinYpos;
+                double pinXpos;
+                double pinYpos;
                 CELL_FOR_ALL_NETS_NO_DIR((*cellPtr),netPtr){
                         Pin *pinPtr;
                         NET_FOR_ALL_PINS((*netPtr),pinPtr){
@@ -132,9 +134,9 @@ gradientFunc(double *grad,int size,double *values,ptr myDesign)
                                 tempDivideX= myDivideNew(pinXpos,alpha);
                                 tempDivideY= myDivideNew(pinYpos,alpha);
                                 pinMaxx += exp(tempDivideX);
-                                pinMinx +=1/(exp(tempDivideX));
+                                pinMinx +=myDivideNew(1,exp(tempDivideX));
                                 pinMaxy += exp(tempDivideY);
-                                pinMiny +=1/(exp(tempDivideY));
+                                pinMiny +=myDivideNew(1,exp(tempDivideY));
                         }NET_END_FOR;
                 }CELL_END_FOR;
                 double tempDivX;
@@ -142,9 +144,9 @@ gradientFunc(double *grad,int size,double *values,ptr myDesign)
                 tempDivX = myDivideNew(cellXpos,alpha);
                 tempDivY = myDivideNew(cellYpos,alpha);
                 cellMaxx = exp(tempDivX);
-                cellMinx = 1/(exp(tempDivX));
+                cellMinx = myDivideNew(1,exp(tempDivX));
                 cellMaxy = exp(tempDivY);
-                cellMiny = 1/(exp(tempDivY));
+                cellMiny = myDivideNew(1,exp(tempDivY));
                 double temp1;
                 double temp2;
                 temp1 = myDivideNew(cellMaxx,pinMaxx);
@@ -157,9 +159,28 @@ gradientFunc(double *grad,int size,double *values,ptr myDesign)
                 gradY = (temp3)-(temp4);
                 grad[idx] = gradX;
                 grad[idx+1]=gradY;
-                //cout << "gradient value for cell: " << (*cellPtr).CellGetName() << "is" << gradX << endl;
+                //cout << "gradient value for cell: " << (*cellPtr).CellGetName() << "is gradx: " << gradX << " gradY: " <<gradY << endl;
+              /*  if (isnan(gradX)){
+                     cout << "gradX is nan: Find the debug information below:" << endl;
+                     cout << "temp1 and temp2 are: "<<temp1 <<"\t" <<temp2<<endl;
+                     cout << "cellMaxX and CellMinX are: "<<cellMaxx<<"\t"<<cellMinx<<endl;
+                     cout << "pinMaxx and PinMinx are: " <<pinMaxx<<"\t"<<pinMinx<<endl;
+                     cout << "cellXpos is: "<< cellXpos<<" cellName: " << cellName<<endl;  
+                //     grad[idx]=0.1;
+                }
+                if (isnan(gradY)){
+                     cout << "gradY is nan: Find the debug information below:" << endl;
+                     cout << "temp3 and temp4 are: "<<temp3 <<"\t" <<temp4<<endl;
+                     cout << "cellMaxY and CellMinY are: "<<cellMaxy<<"\t"<<cellMiny<<endl;
+                     cout << "pinMaxy and PinMiny are: " <<pinMaxy<<"\t"<<pinMiny<<endl;
+                     cout << "cellYpos is: "<< cellYpos<<" cellName: " << cellName<<endl;   
+                  //   grad[idx+1]=0.1;
+                }*/
+                cout <<"iteration Number: "<< gradIterationCount <<"Cell Name: " <<cellName << " CellXpos: "<<cellXpos<< " cellYpos: "<<cellYpos<<" gradX: "<<gradX<<" gradY: "<<gradY<<endl;  
+                
                 idx=idx+2;
         }DESIGN_END_FOR;
+        gradIterationCount++;
 }
 
 
@@ -176,6 +197,7 @@ uint maxx,maxy;
 uint constMaxx,constMaxy;
 ulong lseXHPWL,lseYHPWL;
 uint averageClusterWidth,averageClusterHeight;
+uint averageStdCellWidth,acerageStdCellHeight; 
 uint numClusters,numRows,numSites;
 uint siteWidth,rowHeight;
 
@@ -225,8 +247,11 @@ inputCellCount = inputCells.size();
 /*Create Placeable blocks in the design*/
 DesignGetBoundingBox(maxx,maxy);
 
-averageClusterWidth = (uint)DesignGetAverageClusterCellWidth();
-averageClusterHeight = (uint)DesignGetAverageClusterCellHeight();
+averageStdCellWidth = (uint)DesignGetAverageStdCellWidth();
+averageStdCellHeight=(uint)DesignGetAverageStdCellHeight();
+
+averageClusterWidth = (uint)DesignGetAverageClusterCellWidth()+2*averageStdCellWidth;
+averageClusterHeight = (uint)DesignGetAverageClusterCellHeight()+2*averageStdCellHeight;
 
 numClusters = DesignGetNumClusters();
 numRows = floor(((double)maxy) / averageClusterHeight);
@@ -379,8 +404,8 @@ double *delta=NULL;
 for(i=0;i<numVars;++i)
  {
    delta[i] = 0.0001;
- }
-*/
+ }*/
+
 
 
 /**************** Call the conjugate gradient minimizer ******************************/
