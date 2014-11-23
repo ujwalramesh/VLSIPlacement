@@ -254,3 +254,11 @@ Design::DesignDumpNetDegreeProfile(string fileName)
   } END_FOR;
   opFile.close();
 }
+
+double
+Design::DesignDumpClusterOverlapForPenalty(void){
+        double totalOverlap, peakOverlap, percentOverlap;
+        getTotalClusterOverLap((*this), totalOverlap, peakOverlap, percentOverlap);
+        return percentOverlap;
+
+}

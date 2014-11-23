@@ -63,18 +63,31 @@ uint radius;
 double distanceX,distanceY;
 string cellName;
 Cell *cellPtr;
+double normalizationFactor; 
+
+// Iitialize all cell potentials to zero before starting to update the grid potential
+
+Grid *gridPtrInt;
+string gridNameInt;
+
+MAP_FOR_ALL_ELEMS(DesignGridPoints,string, Grid *,gridNameInt,gridPtrInt){
+                (*gridPtrInt).GridSetgridPotential(0);
+}END_FOR;
+
 
 DESIGN_FOR_ALL_CELLS((*this),cellName,cellPtr){
-
+        if ((*cellPtr).CellIsTerminal()) continue;
         cellXpos = (*cellPtr).CellGetXposDbl();
         cellYpos = (*cellPtr).CellGetYposDbl();
         cellHeight = (*cellPtr).CellGetHeight();
         cellWidth = (*cellPtr).CellGetWidth();
-        cellXcenter = (cellXpos+cellWidth)/2;
-        cellYcenter = (cellYpos+cellHeight)/2;
+        cellXcenter = cellXpos+(cellWidth/2);
+        cellYcenter = cellYpos+(cellHeight/2);
         cellXright = cellXpos + cellWidth;
         cellYtop = cellYpos + cellHeight;
         radius = (cellHeight+cellWidth)/2;
+        //normalization factor will ideally be area/numGridPoints influenced by cell 
+        normalizationFactor= (cellHeight*cellWidth)/725;
         string gridName;
         Grid *gridPtr;
         double gridXpos,gridYpos;
@@ -90,12 +103,11 @@ DESIGN_FOR_ALL_CELLS((*this),cellName,cellPtr){
                         distanceY= fabs (gridYpos - cellYcenter);
                         computeGridPotential  (distanceX,radius, gridPotentialX); 
                         computeGridPotential  (distanceY,radius, gridPotentialY);
-                        gridPotential = gridPotentialX*gridPotentialY; 
+                        gridPotential = normalizationFactor*gridPotentialX*gridPotentialY; 
                         currentPotential = (*gridPtr).GridGetgridPotential();
                         currentPotential = currentPotential + gridPotential; 
                         (*gridPtr).GridSetgridPotential(currentPotential);
-                }
-
+                } 
         }END_FOR;
 
 }DESIGN_END_FOR;
@@ -110,9 +122,15 @@ Design::DesignComputeTotalDensityPenalty(void)
        double averagePotential;
        uint maxx,maxy;
        DesignGetBoundingBox(maxx,maxy);
+       //numGridPoints in one axis. total nuber of grid points will be equal to numGridPoints*numGridPoints  
        double numGridPoints = 100;
-       averagePotential = (maxx*maxy)/numGridPoints;
-       double totalPenalty;
+       uint averageClusterWidth,averageClusterHeight;
+       averageClusterWidth = (uint)DesignGetAverageClusterCellWidth();
+       averageClusterHeight = (uint)DesignGetAverageClusterCellHeight()+2*averageStdCellHeight;
+       //averagePotential = (averageClusterWidth*averageClusterHeight)/(numGridPoints*numGridPoints);
+       // Above average potential was just a try . The below average potential is after considering the normalization parameter
+       averagePotential = (maxx*maxy)/(numGridPoints*numGridPoints);
+       double totalPenalty=0;
        string gridName;
        Grid *gridPtr;
        double gridPotential;

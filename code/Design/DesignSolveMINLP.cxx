@@ -17,6 +17,7 @@
 #include "BonOACutGenerator2.hpp"
 #include "BonEcpCuts.hpp"
 #include "BonOaNlpOptim.hpp"
+#define REDIRECT
 
 /*local void
 getNLPCellsToSolveNew(Design &myDesign,vector<Cell *> &cellsToSolve)
@@ -33,7 +34,7 @@ getNLPCellsToSolveNew(Design &myDesign,vector<Cell *> &cellsToSolve)
 void
 Design::DesignSolveForAllCellsMINLP(void)
 {
-
+using namespace boost;
 using namespace Ipopt;
 using namespace Bonmin;
 
@@ -72,7 +73,9 @@ rowNum = 0;
 uint count = 0;
 string cellName;
 
-DESIGN_FOR_ALL_CLUSTERS((*this), cellName, clusterCellPtr) {
+// Constructive placement commented to check the working of Bonmin
+
+/*DESIGN_FOR_ALL_CLUSTERS((*this), cellName, clusterCellPtr) {
                 clusterXpos = siteNum * siteWidth;
                 clusterYpos = rowNum * rowHeight;
                 (*clusterCellPtr).CellSetXpos(clusterXpos);
@@ -85,7 +88,7 @@ DESIGN_FOR_ALL_CLUSTERS((*this), cellName, clusterCellPtr) {
                 clusterCells.push_back(clusterCellPtr);
                 count++;
 } DESIGN_END_FOR;
-
+*/
 
 std::vector<Cell *> cellsToSolve; // Now coded in get_variable_types 
 getNLPCellsToSolveNew ((*this),cellsToSolve);
@@ -95,9 +98,9 @@ Number x[numVars];
 if (debug) {
         cout << "maxx " << maxx << " maxy " << maxy << endl;
         get_starting_point(numVars,true,x,false,NULL,NULL,2*numVars,false,NULL);
-        Number wirelength;
-        eval_f(numVars,x,false,wirelength);
-        cout << "wirelength minlp is " << wirelength<<endl;
+        //Number wirelength;
+        //eval_f(numVars,x,false,wirelength);
+        //cout << "wirelength minlp is " << wirelength<<endl;
 }
 
 /* Get All the variables to be solved for from the design class*/
@@ -107,11 +110,17 @@ if (debug) {
 
 
 
-
-
 /* Call the Bonmin functions ---- Prototype taken from /home/rameshul/Bonmin-1.7/Bonmin/examples/CppExample/MyBonmin.cpp ------ */
-SmartPtr<TMINLP> tminlp = this;
-BonminSetup bonmin;
+//shared_ptr<Design> p = (*this).returnSharedPointerFromThis();
+SmartPtr<Design> tminlp = this;
+//tminlp = this;
+#ifdef REDIRECT
+        FILE * fp = fopen("bonminLog.out","w");
+        CoinMessageHandler handler(fp);
+        BonminSetup bonmin(&handler);
+#else
+        BonminSetup bonmin;
+#endif
 bonmin.initializeOptionsAndJournalist();
  bonmin.roptions()->AddStringOption2("print_solution","Do we print the solution or not?",
                                   "yes",
@@ -121,10 +130,14 @@ bonmin.initializeOptionsAndJournalist();
     // Here we can change the default value of some Bonmin or Ipopt option
      bonmin.options()->SetNumericValue("bonmin.time_limit", 5); //changes bonmin's time limit
      bonmin.options()->SetStringValue("mu_oracle","loqo");
-
+     bonmin.options()->SetIntegerValue("bonmin.bb_log_level",3);
+     bonmin.options()->SetIntegerValue("print_level",6);
+//     bonmin.options()->SetStringValue("hessian_approximation","limited-memory");
+     bonmin.options()->SetStringValue("derivative_test","first-order");
+     bonmin.options()->SetStringValue("output_file","Ipopt.log");
      //Here we read several option files
      bonmin.readOptionsFile("Mybonmin.opt");
-     //bonmin.readOptionsFile();// This reads the default file "bonmin.opt"
+    // bonmin.readOptionsFile();// This reads the default file "bonmin.opt"
 
      // Options can also be set by using a string with a format similar to the bonmin.opt file
      bonmin.readOptionsString("bonmin.algorithm B-BB\n");
@@ -136,6 +149,7 @@ bonmin.initializeOptionsAndJournalist();
       }
     //Now initialize from tminlp
     bonmin.initialize(GetRawPtr(tminlp),false);
+    //bonmin.initialize(this,false);
     //Set up done, now let's branch and bound
     try {
        Bab bb;
@@ -155,6 +169,5 @@ bonmin.initializeOptionsAndJournalist();
         <<std::endl
         <<E.message()<<std::endl;
     }
-
-
+//tminlp=NULL;
 }

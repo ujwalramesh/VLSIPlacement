@@ -25,6 +25,7 @@
 # include <Grid.h>
 # include <metis.h>
 #include  "BonTMINLP.hpp"
+#include <boost/enable_shared_from_this.hpp>
 
 # define MAX_PATHS 1000000
 
@@ -215,7 +216,8 @@ class scoreCmpTypeUint {
 
 using namespace Ipopt;
 using namespace Bonmin;
-class Design : public TMINLP { 
+using namespace boost;
+class Design : public TMINLP,public enable_shared_from_this<Design> { 
  private:
   Env DesignEnv;
   map<uint, uint>RowHeights;
@@ -362,8 +364,14 @@ class Design : public TMINLP {
   vector<Cell *> DesignGetCellsSortedByLeft(void);
   vector<Cell *> DesignGetCellsSortedByRight(void);
   vector<Cell *> DesignGetCellsSortedByBot(void);
+  //virtual ~Design() {} ;
 
  public:
+ /*rameshul included as a solution to shared pointers*/
+ shared_ptr<Design> returnSharedPointerFromThis(void)
+ {
+        return shared_from_this();
+ }
   map<string, Cell*> DesignCells;
   map<string, Cell*> DesignHiddenCells;
   map<string, Cell*> DesignClusters;
@@ -576,6 +584,8 @@ class Design : public TMINLP {
   void DesignReadPlacerOutput(string, map<string, Cell*> &, uint, uint);
   void DesignDumpClusterInfo(string);
   void DesignDumpNetDegreeProfile(string);
+  // rameshul added for trying penalty method
+  double DesignDumpClusterOverlapForPenalty(void);
   void DesignFlipClusterHorizontal(Cell*);
   void DesignFlipClusterVertical(Cell*);
 

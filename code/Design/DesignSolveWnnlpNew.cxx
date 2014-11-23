@@ -63,6 +63,7 @@ VECTOR_FOR_ALL_ELEMS(cellsToSolve,Cell *, cellPtr){
 
 }
 
+/* Objective function here calculates the Log sum exponential of my HPWL and also adds penalty to my objective based on overlap*/
 
 double
 wirelengthObjFunc(int size, double *values,ptr myDesign) /* Need to justify size, values and client_data. Just reused it from definition of pfunction*/
@@ -74,24 +75,67 @@ wirelengthObjFunc(int size, double *values,ptr myDesign) /* Need to justify size
   uint idx=0;
         //cout << " Void pointer Type: " <<typeid(*((Design*)myDesign)).name() << endl;  
         DESIGN_FOR_ALL_CELLS((*((Design*)myDesign)),cellName,cellPtr){
-//                cout << "Changing Xposition for cell: " << (*cellPtr).CellGetName() << " to " << values[idx] << endl;
-                   if ((*cellPtr).CellIsTerminal()) continue;     
+                //cout << "Changing Xposition for cell: " << (*cellPtr).CellGetName() << " to " << values[idx] << endl;
+                 if ((*cellPtr).CellIsTerminal()) continue;     
                 (*cellPtr).CellSetXposDbl(values[idx]);
                 (*cellPtr).CellSetYposDbl(values[idx+1]);
-  //              cout << "The new Xposition of the cell is " << (*cellPtr).CellGetXpos() << endl;
+                //cout << "The new Xposition of the cell is " << (*cellPtr).CellGetXpos() << endl;
                 idx = idx+2;
 
         }END_FOR;
         ulong LseHPWL;
         LseHPWL = (*((Design*)myDesign)).DesignComputeLseHPWL();
    /*Adding penalty function for density constraint as per Will Naylor's patent*/
-    double totalDensityPenalty=0;
-   // (*((Design*)myDesign)).DesignUpdateGridPotentials();
-   // totalDensityPenalty =(*((Design*)myDesign)).DesignComputeTotalDensityPenalty();
+   double totalDensityPenalty=0; /*variable for adding penalty for my objective function*/
+   
+   /* Below penalty method is my penalty based on percentage overlap and tried out of intution by taking (percentageOverlap)^3 to make it differentiable*/  
+/*   double totalOverlap;
+   totalOverlap = (*((Design*)myDesign)).DesignDumpClusterOverlapForPenalty();
+   uint lambda = 2; 
+   bool loop1=true;
+   bool loop2=true;
+   bool loop3=true;
+   
+   totalDensityPenalty= pow(totalOverlap,3);
+
+   if (totalOverlap > 300 ) {
+        totalDensityPenalty= 3000*totalDensityPenalty;
+        //lambda=lambda*2;
+   } else if ((totalOverlap >200) && (totalOverlap <= 300 )) {
+           if (loop1){
+                   lambda=2;
+                   loop1=false;
+           }
+           totalDensityPenalty= 5000*totalDensityPenalty;
+         //  lambda=lambda*2;
+   } else if ((totalOverlap >100 ) && (totalOverlap <= 200 )){
+           if (loop2){
+                   lambda=2;
+                   loop2=false;
+           }
+           totalDensityPenalty= 8000*totalDensityPenalty;
+           //lambda=lambda*2;
+   } else if ((totalOverlap > 10 ) && (totalOverlap <= 100 )){
+           if (loop3){
+                   lambda=2;
+                   loop3=false;
+           }
+           totalDensityPenalty= 12000*totalDensityPenalty;
+          // lambda=lambda*2;
+   } else if ((totalOverlap <= 10 ) && (totalOverlap >= 0 )) {
+           totalDensityPenalty =0 ;
+   }
+
+*/
+
+/*  The below penalty method is for penalizing my objective based on grod point potentials */
+//   (*((Design*)myDesign)).DesignUpdateGridPotentials();
+//   totalDensityPenalty =(*((Design*)myDesign)).DesignComputeTotalDensityPenalty();
+    
         double rtv;
         rtv = LseHPWL+totalDensityPenalty;
-   //     cout << "ulong wirelength is: " << LseHPWL <<endl;
-    //    cout << "Density Penalty is : " << totalDensityPenalty<<endl;
+        cout << "ulong wirelength is: " << LseHPWL << "\t";
+        cout << "Density Penalty is : " << totalDensityPenalty<<endl;
     objIterationCount++;
         return rtv;
 }
@@ -129,8 +173,10 @@ gradientFunc(double *grad,int size,double *values,ptr myDesign)
                 CELL_FOR_ALL_NETS_NO_DIR((*cellPtr),netPtr){
                         Pin *pinPtr;
                         NET_FOR_ALL_PINS((*netPtr),pinPtr){
-                                pinXpos = pinPtr->xOffset + cellXpos;
-                                pinYpos = pinPtr->yOffset + cellYpos;
+                                Cell* cellParentPtr;
+                                cellParentPtr = (*pinPtr).PinGetParentCellPtr();
+                                pinXpos = pinPtr->xOffset + cellParentPtr->x;
+                                pinYpos = pinPtr->yOffset + cellParentPtr->y;
                                 tempDivideX= myDivideNew(pinXpos,alpha);
                                 tempDivideY= myDivideNew(pinYpos,alpha);
                                 pinMaxx += exp(tempDivideX);
@@ -160,7 +206,7 @@ gradientFunc(double *grad,int size,double *values,ptr myDesign)
                 grad[idx] = gradX;
                 grad[idx+1]=gradY;
                 //cout << "gradient value for cell: " << (*cellPtr).CellGetName() << "is gradx: " << gradX << " gradY: " <<gradY << endl;
-              /*  if (isnan(gradX)){
+                if (isnan(gradX)){
                      cout << "gradX is nan: Find the debug information below:" << endl;
                      cout << "temp1 and temp2 are: "<<temp1 <<"\t" <<temp2<<endl;
                      cout << "cellMaxX and CellMinX are: "<<cellMaxx<<"\t"<<cellMinx<<endl;
@@ -175,7 +221,7 @@ gradientFunc(double *grad,int size,double *values,ptr myDesign)
                      cout << "pinMaxy and PinMiny are: " <<pinMaxy<<"\t"<<pinMiny<<endl;
                      cout << "cellYpos is: "<< cellYpos<<" cellName: " << cellName<<endl;   
                   //   grad[idx+1]=0.1;
-                }*/
+                }
                 cout <<"iteration Number: "<< gradIterationCount <<"Cell Name: " <<cellName << " CellXpos: "<<cellXpos<< " cellYpos: "<<cellYpos<<" gradX: "<<gradX<<" gradY: "<<gradY<<endl;  
                 
                 idx=idx+2;
@@ -222,7 +268,7 @@ wn_nonlinear_constraint_type nonlinear_constraint;
 
 wn_nonlinear_constraint_type objective;
 
-uint i;
+uint i,j;
 
 int code;
 
@@ -250,8 +296,11 @@ DesignGetBoundingBox(maxx,maxy);
 averageStdCellWidth = (uint)DesignGetAverageStdCellWidth();
 averageStdCellHeight=(uint)DesignGetAverageStdCellHeight();
 
-averageClusterWidth = (uint)DesignGetAverageClusterCellWidth()+2*averageStdCellWidth;
-averageClusterHeight = (uint)DesignGetAverageClusterCellHeight()+2*averageStdCellHeight;
+//averageClusterWidth = (uint)DesignGetAverageClusterCellWidth()+2*averageStdCellWidth;
+//averageClusterHeight = (uint)DesignGetAverageClusterCellHeight()+2*averageStdCellHeight;
+
+averageClusterWidth = (uint)DesignGetAverageClusterCellWidth();
+averageClusterHeight = (uint)DesignGetAverageClusterCellHeight();
 
 numClusters = DesignGetNumClusters();
 numRows = floor(((double)maxy) / averageClusterHeight);
@@ -259,18 +308,24 @@ numSites = ceil(((double)numClusters) / numRows);
 siteWidth = floor(((double)maxx) / numSites);
 rowHeight = averageClusterHeight;
 constMaxx = maxx -  averageClusterWidth;
-constMaxy = maxy - averageClusterHeight;  
+constMaxy = maxy - averageClusterHeight;
+
+uint Xcenterdie,Ycenterdie;
+Xcenterdie=maxx/2;
+Ycenterdie=maxy/2;
 
 uint siteNum,rowNum;
 /* Place Clusters Constructively*/ 
 siteNum = 0;
 rowNum = 0;
 uint count = 0;
-DESIGN_FOR_ALL_CLUSTERS((*this), cellName, clusterCellPtr) {
-        clusterXpos = siteNum * siteWidth;
-        clusterYpos = rowNum * rowHeight;
+/*DESIGN_FOR_ALL_CLUSTERS((*this), cellName, clusterCellPtr) {
+      //  clusterXpos = siteNum * siteWidth;
+       // clusterYpos = rowNum * rowHeight;
+        clusterXpos = Xcenterdie;
+       clusterYpos = Ycenterdie;
         (*clusterCellPtr).CellSetXpos(clusterXpos); 
-        siteNum++;
+       // siteNum++;
         (*clusterCellPtr).CellSetYpos(clusterYpos); 
         if (siteNum == numSites) {
              siteNum = 0;
@@ -280,7 +335,7 @@ DESIGN_FOR_ALL_CLUSTERS((*this), cellName, clusterCellPtr) {
         count++;
 } DESIGN_END_FOR;
 
-
+*/
 
 /* rameshul Debug*/
 if (debug) { 
@@ -292,6 +347,10 @@ if (debug) {
        lseHPWL=DesignComputeLseHPWL();
        cout << "LSE HPWL of Visible cells is : " << lseHPWL << endl;
       // printVisibleCellsineachCluster((*this),"nlp_cluster");
+   double percentageOverlap;
+   percentageOverlap = (*this).DesignDumpClusterOverlapForPenalty();
+   cout << "Percentage Overlap for debug" << percentageOverlap << endl; 
+   
 }
 /*End Debug*/
 
@@ -393,18 +452,51 @@ for (i=1;i<numVars;i=i+2){
         wn_sllins(&constraint_list,linear_constraint);
 }
 
+/*  Trying below the overlap constraints based on LP approach as suggested by Prof.Jeffery Camm */
+
+/*for (i=0;i<numVars;i=i+2){
+        for (j=0;j<numVars;j=j+2){
+                if (j <= i) continue;
+                wn_make_linear_constraint(&linear_constraint,1,(averageClusterWidth+values[j]),WN_GT_COMPARISON);
+                (linear_constraint->vars)[0] = i;
+                (linear_constraint->weights)[0] = 1.0;
+               wn_sllins(&constraint_list,linear_constraint);
+                wn_make_linear_constraint(&linear_constraint,1,(-averageClusterWidth-values[j]),WN_GT_COMPARISON);
+                (linear_constraint->vars)[0] = i;
+                (linear_constraint->weights)[0] = 1.0;
+               wn_sllins(&constraint_list,linear_constraint);
+        }
+}
+for (i=1;i<numVars;i=i+2){
+        for (j=1;j<numVars;j=j+2){
+                if (j <= i) continue;
+                wn_make_linear_constraint(&linear_constraint,1,(averageClusterHeight+values[j]),WN_GT_COMPARISON);
+                (linear_constraint->vars)[0] = i;
+                (linear_constraint->weights)[0] = 1.0;
+               wn_sllins(&constraint_list,linear_constraint);
+                wn_make_linear_constraint(&linear_constraint,1,(-averageClusterHeight-values[j]),WN_GT_COMPARISON);
+                (linear_constraint->vars)[0] = i;
+                (linear_constraint->weights)[0] = 1.0;
+               wn_sllins(&constraint_list,linear_constraint);
+        }
+}
+*/
+
+
+
 
 
 /***** JUST a try with the deltaX ****/
 
-double *delta=NULL;
-/*double delta[numVars];
+//double *delta=NULL;
+uint numDeltas=2*numVars;
+double delta[numDeltas];
 
 // wn_make_vect(&deltaX,numVars);
-for(i=0;i<numVars;++i)
+for(i=0;i<numDeltas;++i)
  {
    delta[i] = 0.0001;
- }*/
+ }
 
 
 
@@ -412,7 +504,7 @@ for(i=0;i<numVars;++i)
 
 // For X coordinates
 //Commented for compiling
-wn_nlp_conj_method(&code,&val_min,values,delta,(wn_nonlinear_constraint_type)objective,constraint_list,numVars,numVars,10,1.0);
+wn_nlp_conj_method(&code,&val_min,values,delta,(wn_nonlinear_constraint_type)objective,constraint_list,numVars,numVars,10,1);
 
 cout << " Final value after minimization is: " << val_min << " code: " <<code <<endl;   
 cout << "Final HPWL after minimization is: " <<  (*this).DesignComputeLseHPWL()<<endl;
@@ -422,5 +514,9 @@ for(int i=0;i<numVars;++i){
         cout << "Final X: " <<values[i]<<" Final Y: "<<values[i+1]<<endl;
         i=i+1;
 }
+
+   double percentageOverlap;
+   percentageOverlap = (*this).DesignDumpClusterOverlapForPenalty();
+   cout << "Percentage Overlap for debug" << percentageOverlap << endl; 
 
 }

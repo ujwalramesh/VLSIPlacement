@@ -354,8 +354,8 @@ Net::NetComputeLseHPWL(uint &xHPWL, uint &yHPWL)
     lseminy += (1/(exp(pinYpos/alpha)));
 
   }
-  xHPWL = (alpha * log(lsemaxx)) - (alpha * log(lseminx));   
-  yHPWL = (alpha * log(lsemaxy)) - (alpha * log(lseminy)); 
+  xHPWL = (alpha * log(lsemaxx)) + (alpha * log(lseminx));   
+  yHPWL = (alpha * log(lsemaxy)) + (alpha * log(lseminy)); 
 
   /* rameshul Below lines are for debug purpose only - continues until End Debug */
   if (debug_switch) {

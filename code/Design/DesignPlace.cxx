@@ -363,7 +363,7 @@ Design::DesignRunInternalPlacer(EnvSolverType solverType)
   finalOutputName = DesignName + "postMP";
   string MPlacerLogFile = DesignName + "_shaping_log";
   netModel = DesignEnv.EnvGetNetModel();
-  uint numpoints = 10;
+  uint numpoints = 100;
     string gName ;
     Grid *gPtr;
   
@@ -390,18 +390,23 @@ Design::DesignRunInternalPlacer(EnvSolverType solverType)
     /*Justification -- The density penalty is used to place only clusters and there are a maximum of 100 clusters only */
     /*Increasing the Number of Grid Points will increase run time*/
     /* Grid points created based on maxx and maxy*/
-    DesignCreateGridPoints(numpoints);  
-    DESIGN_FOR_ALL_GRID_POINTS((*this),gName,gPtr){
+   
+   DesignCreateGridPoints(numpoints);
+   DesignUpdateGridPotentials();
+   
+    /*DESIGN_FOR_ALL_GRID_POINTS((*this),gName,gPtr){
             cout << "Gridname: "<<gName<<" GridXpos: " <<(*gPtr).GridGetgridX();
             cout << " GridYpos: "<<(*gPtr).GridGetgridY()<<" gridPot: " << (*gPtr).GridGetgridPotential()<< endl;
-    }DESIGN_END_FOR;
+    }DESIGN_END_FOR;*/
 
     cout << "Begin Non Linear Solver" << endl;
     DesignSolveForAllCellsWnnlpNew();
-    DESIGN_FOR_ALL_GRID_POINTS((*this),gName,gPtr){
+   
+   /* DESIGN_FOR_ALL_GRID_POINTS((*this),gName,gPtr){
             cout << "Gridname: "<<gName<<" GridXpos: " <<(*gPtr).GridGetgridX();
             cout << " GridYpos: "<<(*gPtr).GridGetgridY()<<" gridPot: " << (*gPtr).GridGetgridPotential()<< endl;
-    }DESIGN_END_FOR;
+    }DESIGN_END_FOR;*/
+
     /************** No Justification to flow, Just copied from below **********/
     /************* Comment upto End trial if flow fails ******/
 
@@ -439,7 +444,16 @@ Design::DesignRunInternalPlacer(EnvSolverType solverType)
     break;
   case ENV_SOLVER_MI_NON_LINEAR:
      cout << "Mixed Integer Nonlinear Solver is invoked!" << endl;
+      DesignCreateGridPoints(numpoints);
+    /*DESIGN_FOR_ALL_GRID_POINTS((*this),gName,gPtr){
+            cout << "Gridname: "<<gName<<" GridXpos: " <<(*gPtr).GridGetgridX();
+            cout << " GridYpos: "<<(*gPtr).GridGetgridY()<<" gridPot: " << (*gPtr).GridGetgridPotential()<< endl;
+    }DESIGN_END_FOR;*/
      DesignSolveForAllCellsMINLP();
+    /*DESIGN_FOR_ALL_GRID_POINTS((*this),gName,gPtr){
+            cout << "Gridname: "<<gName<<" GridXpos: " <<(*gPtr).GridGetgridX();
+            cout << " GridYpos: "<<(*gPtr).GridGetgridY()<<" gridPot: " << (*gPtr).GridGetgridPotential()<< endl;
+    }DESIGN_END_FOR;*/
     DesignDoClusterSwapping();
     //ProfilerStop();
            DesignFillCellsInCluster();

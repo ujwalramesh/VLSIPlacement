@@ -2051,5 +2051,10 @@ Design::Design(string DesignPath, string DesignName, Env &designEnv)
 
 Bonmin::TMINLP::TMINLP(){}
 Bonmin::TMINLP::~TMINLP(){}
+/*using namespace boost;
 
+shared_ptr<Design> returnSharedPointerFromThis(void)
+{
+return shared_from_this();
 
+}*/
