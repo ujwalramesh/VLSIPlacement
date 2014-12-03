@@ -219,6 +219,12 @@ Design::DesignSetPeakUtil(double maxUtil)
   this->peakUtilization = maxUtil;
 }
 
+void 
+Design::DesignSetpenaltyParameter(double penaltyParam)
+{
+        this->penaltyParameter = penaltyParam;
+}
+
 void
 Design::DesignSetMaxUtil(double maxUtil)
 {
@@ -256,6 +262,13 @@ Design::DesignGetNumBinCols(void)
 {
   return (this->numBinCols);
 }
+
+double 
+Design::DesignGetpenaltyParameter(void)
+{
+        return (this->penaltyParameter);
+}
+
 
 void
 Design::DesignSetHPWL(ulong designHPWL)

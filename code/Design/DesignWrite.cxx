@@ -484,5 +484,25 @@ printVisibleCellsineachCluster ( Design& myDesign, string fname)
         // The pins after clustering gives Cluster names only. need to figure out a way to get Cell names 
 }
 
+/*double 
+myLog (double x) {
+
+         if(x > 1.0)
+         {   
+           return(log(x));
+         }   
+         else if(x > 0.0)
+         {   
+           // match function value and slope at boundary 
+             // of constrained region 
+           return(1.0*(x-1.0));  
+         }   
+         else
+         {   
+           // match function value at x = 0, but stop going to -infinity 
+           return(-1.0);
+         }   
+}*/   
+
 
         

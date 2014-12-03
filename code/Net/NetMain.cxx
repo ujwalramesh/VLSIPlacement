@@ -314,6 +314,28 @@ vector<Pin *> & Net::NetGetAllPinsVector(void)
   return (this->PinList);
 }
 
+double 
+myLog (double x) {
+
+         if(x > 1.0)
+         {   
+           return(log(x));
+         }   
+         else if(x > 0.0)
+         {   
+           /* match function value and slope at boundary 
+              of constrained region */
+           return(1.0*(x-1.0));  
+         }   
+         else
+         {   
+           /* match function value at x = 0, but stop going to -infinity */
+           return(-1.0);
+         }   
+}   
+
+
+
 /* Below Subroutine is used to calculate Log Sum exponential HPWL - icluded by rameshul */  
 
 void
@@ -354,8 +376,8 @@ Net::NetComputeLseHPWL(uint &xHPWL, uint &yHPWL)
     lseminy += (1/(exp(pinYpos/alpha)));
 
   }
-  xHPWL = (alpha * log(lsemaxx)) + (alpha * log(lseminx));   
-  yHPWL = (alpha * log(lsemaxy)) + (alpha * log(lseminy)); 
+  xHPWL = (alpha * myLog(lsemaxx)) + (alpha * myLog(lseminx));   
+  yHPWL = (alpha * myLog(lsemaxy)) + (alpha * myLog(lseminy)); 
 
   /* rameshul Below lines are for debug purpose only - continues until End Debug */
   if (debug_switch) {
@@ -408,7 +430,7 @@ Net::NetComputeLseXHPWL(uint &xHPWL)
     lseminx += (1/(exp(pinXpos/alpha)));
 
   }
-  xHPWL = (alpha * log(lsemaxx)) + (alpha * log(lseminx));   
+  xHPWL = (alpha * myLog(lsemaxx)) + (alpha * myLog(lseminx));   
 
   /* rameshul Below lines are for debug purpose only - continues until End Debug */
   if (debug_switch) {
@@ -457,7 +479,7 @@ Net::NetComputeLseYHPWL(uint &yHPWL)
     lseminy += (1/(exp(pinYpos/alpha)));
 
   }
-  yHPWL = (alpha * log(lsemaxy)) + (alpha * log(lseminy));   
+  yHPWL = (alpha * myLog(lsemaxy)) + (alpha * myLog(lseminy));   
 
   /* rameshul Below lines are for debug purpose only - continues until End Debug */
   if (debug_switch) {

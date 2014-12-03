@@ -66,13 +66,15 @@ VECTOR_FOR_ALL_ELEMS(cellsToSolve,Cell *, cellPtr){
 /* Objective function here calculates the Log sum exponential of my HPWL and also adds penalty to my objective based on overlap*/
 
 double
-wirelengthObjFunc(int size, double *values,ptr myDesign) /* Need to justify size, values and client_data. Just reused it from definition of pfunction*/
+wirelengthObjFunc(int size, double *values,ptr myDesign) 
 {
   /* objective here is total_wirelength = sum over all nets ( wirelength (net) * net weight) */
   static int objIterationCount=0;
   Cell *cellPtr;
   string cellName;
   uint idx=0;
+  double penaltyParameter;
+  penaltyParameter = (*((Design*)myDesign)).DesignGetpenaltyParameter();
         //cout << " Void pointer Type: " <<typeid(*((Design*)myDesign)).name() << endl;  
         DESIGN_FOR_ALL_CELLS((*((Design*)myDesign)),cellName,cellPtr){
                 //cout << "Changing Xposition for cell: " << (*cellPtr).CellGetName() << " to " << values[idx] << endl;
@@ -129,18 +131,29 @@ wirelengthObjFunc(int size, double *values,ptr myDesign) /* Need to justify size
 */
 
 /*  The below penalty method is for penalizing my objective based on grod point potentials */
-//   (*((Design*)myDesign)).DesignUpdateGridPotentials();
-//   totalDensityPenalty =(*((Design*)myDesign)).DesignComputeTotalDensityPenalty();
-    
+   (*((Design*)myDesign)).DesignUpdateGridPotentials();
+   totalDensityPenalty =(*((Design*)myDesign)).DesignComputeTotalDensityPenalty();
+    if (penaltyParameter < 0 ) {
+            penaltyParameter = -penaltyParameter;
+   }
+   //static uint lambda;
+   //lambda=2;
         double rtv;
-        rtv = LseHPWL+totalDensityPenalty;
+       rtv = LseHPWL+(penaltyParameter*totalDensityPenalty);
         cout << "ulong wirelength is: " << LseHPWL << "\t";
-        cout << "Density Penalty is : " << totalDensityPenalty<<endl;
+        cout << "Density Penalty is : " << penaltyParameter*totalDensityPenalty << "\t";
+        cout << "objective Value is : " << rtv << endl;
+        //lambda=lambda*2;
     objIterationCount++;
         return rtv;
 }
-        
-void 
+
+
+// The below function is the working gradient function before adding the gradient of the penalty.
+// Delete the below function once the gradient function including penalty works.
+// A git backup is also saved before adding the new function
+
+/*void 
 gradientFunc(double *grad,int size,double *values,ptr myDesign)
 {
         static int gradIterationCount=0;
@@ -223,6 +236,107 @@ gradientFunc(double *grad,int size,double *values,ptr myDesign)
                   //   grad[idx+1]=0.1;
                 }
                 cout <<"iteration Number: "<< gradIterationCount <<"Cell Name: " <<cellName << " CellXpos: "<<cellXpos<< " cellYpos: "<<cellYpos<<" gradX: "<<gradX<<" gradY: "<<gradY<<endl;  
+                
+                idx=idx+2;
+        }DESIGN_END_FOR;
+        gradIterationCount++;
+}*/
+
+
+void 
+gradientFunc(double *grad,int size,double *values,ptr myDesign)
+{
+        static int gradIterationCount=0;
+        Cell *cellPtr;
+        string cellName;
+        uint alpha = 500;
+        uint idx=0;
+        double cellXpos;  
+        double cellYpos;
+        double densityPenaltyGradient;
+        double penaltyParameter;
+        penaltyParameter = (*((Design*)myDesign)).DesignGetpenaltyParameter();
+        densityPenaltyGradient = (*((Design*)myDesign)).DesignComputeTotalDensityPenaltyGradient();
+        cout << "Total Density Penalty Gradient: " << densityPenaltyGradient << endl; 
+        DESIGN_FOR_ALL_CELLS((*((Design*)myDesign)),cellName,cellPtr){
+                if ((*cellPtr).CellIsTerminal()) continue;
+                double gradX=0;
+                double gradY=0;
+                double cellMaxx;
+                double cellMinx;
+                double cellMaxy;
+                double cellMiny;
+                cellXpos = (*cellPtr).CellGetXposDbl();
+                cellYpos = (*cellPtr).CellGetYposDbl();
+                Net *netPtr;
+                double sumPinsPos;
+                double pinMaxx;
+                double pinMinx;
+                double pinMaxy;
+                double pinMiny;
+                double tempDivideX;
+                double tempDivideY;
+                double pinXpos;
+                double pinYpos;
+                CELL_FOR_ALL_NETS_NO_DIR((*cellPtr),netPtr){
+                        Pin *pinPtr;
+                        NET_FOR_ALL_PINS((*netPtr),pinPtr){
+                                Cell* cellParentPtr;
+                                cellParentPtr = (*pinPtr).PinGetParentCellPtr();
+                                pinXpos = pinPtr->xOffset + cellParentPtr->x;
+                                pinYpos = pinPtr->yOffset + cellParentPtr->y;
+                                tempDivideX= myDivideNew(pinXpos,alpha);
+                                tempDivideY= myDivideNew(pinYpos,alpha);
+                                pinMaxx += exp(ceil(tempDivideX));
+                                pinMinx +=myDivideNew(1,exp(ceil(tempDivideX)));
+                                pinMaxy += exp(ceil(tempDivideY));
+                                pinMiny +=myDivideNew(1,exp(ceil(tempDivideY)));
+                        }NET_END_FOR;
+                }CELL_END_FOR;
+                double tempDivX;
+                double tempDivY;
+                tempDivX = myDivideNew(cellXpos,alpha);
+                tempDivY = myDivideNew(cellYpos,alpha);
+                cellMaxx = exp(ceil(tempDivX));
+                cellMinx = myDivideNew(1,exp(ceil(tempDivX)));
+                cellMaxy = exp(ceil(tempDivY));
+                cellMiny = myDivideNew(1,exp(ceil(tempDivY)));
+                double temp1;
+                double temp2;
+                temp1 = myDivideNew(cellMaxx,pinMaxx);
+                temp2 = myDivideNew(cellMinx,pinMinx);
+                gradX = (temp1)-(temp2);
+                double temp3;
+                double temp4;
+                temp3 = myDivideNew(cellMaxy,pinMaxy);
+                temp4 = myDivideNew(cellMiny,pinMiny);
+                gradY = (temp3)-(temp4);
+                // Change to add the gradient for the penalty is here
+                double gradPotentialX;
+                double gradPotentialY;
+                (*((Design*)myDesign)).DesignComputePenaltyGradientforCell(cellPtr,gradPotentialX,gradPotentialY);
+                grad[idx] = gradX + penaltyParameter*gradPotentialX*densityPenaltyGradient;
+                grad[idx+1]=gradY + penaltyParameter*gradPotentialY*densityPenaltyGradient;
+                //grad[idx] = gradX + 0.5*gradPotentialX;
+                //grad[idx+1]=gradY + 0.5*gradPotentialY;
+                //cout << "gradient value for cell: " << (*cellPtr).CellGetName() << "is gradx: " << gradX << " gradY: " <<gradY << endl;
+                if (isnan(grad[idx])){
+                     cout << "gradX is nan: Find the debug information below:" << endl;
+                     cout << "temp1 and temp2 are: "<<temp1 <<"\t" <<temp2<<endl;
+                     cout << "cellMaxX and CellMinX are: "<<cellMaxx<<"\t"<<cellMinx<<endl;
+                     cout << "pinMaxx and PinMinx are: " <<pinMaxx<<"\t"<<pinMinx<<endl;
+                     cout << "cellXpos is: "<< cellXpos<<" cellName: " << cellName<<endl;  
+                //     grad[idx]=0.1;
+                }
+                if (isnan(grad[idx+1])){
+                     cout << "gradY is nan: Find the debug information below:" << endl;
+                     cout << "temp3 and temp4 are: "<<temp3 <<"\t" <<temp4<<endl;
+                     cout << "cellMaxY and CellMinY are: "<<cellMaxy<<"\t"<<cellMiny<<endl;
+                     cout << "pinMaxy and PinMiny are: " <<pinMaxy<<"\t"<<pinMiny<<endl;
+                     cout << "cellYpos is: "<< cellYpos<<" cellName: " << cellName<<endl;   
+                  //   grad[idx+1]=0.1;
+                }
+                cout <<"iteration Number: "<< gradIterationCount <<"Cell Name: " <<cellName << " CellXpos: "<<cellXpos<< " cellYpos: "<<cellYpos<<" gradX: "<<grad[idx]<<" gradY: "<<grad[idx+1]<<endl;  
                 
                 idx=idx+2;
         }DESIGN_END_FOR;
@@ -320,12 +434,12 @@ siteNum = 0;
 rowNum = 0;
 uint count = 0;
 /*DESIGN_FOR_ALL_CLUSTERS((*this), cellName, clusterCellPtr) {
-      //  clusterXpos = siteNum * siteWidth;
-       // clusterYpos = rowNum * rowHeight;
-        clusterXpos = Xcenterdie;
-       clusterYpos = Ycenterdie;
+        clusterXpos = siteNum * siteWidth;
+        clusterYpos = rowNum * rowHeight;
+//        clusterXpos = Xcenterdie;
+       //clusterYpos = Ycenterdie;
         (*clusterCellPtr).CellSetXpos(clusterXpos); 
-       // siteNum++;
+        siteNum++;
         (*clusterCellPtr).CellSetYpos(clusterYpos); 
         if (siteNum == numSites) {
              siteNum = 0;
@@ -334,8 +448,8 @@ uint count = 0;
         clusterCells.push_back(clusterCellPtr);
         count++;
 } DESIGN_END_FOR;
-
 */
+
 
 /* rameshul Debug*/
 if (debug) { 
@@ -374,7 +488,7 @@ End Debug*/
 double values[numVars];
 /* Populate Initial Values of x and y*/
 nlpInitialValuesNew(cellsToSolve,values);
-
+DesignComputepenaltyParameter();
 /* rameshul Debug for objective Function
 ulong wirelengthBeforeX;
 wirelengthBeforeX = (*this).DesignComputeLseXHPWL();

@@ -45,7 +45,7 @@ bool Design::get_variables_types(Index n, VariableType* var_types){
                 var_types[i]=CONTINUOUS;
       
         }
-        var_types[numVars]=BINARY;
+        var_types[numVars]=INTEGER;
        
 return true;
 }
@@ -81,7 +81,7 @@ int size = 2*(cellsToSolve.size());
 n = size+1;
 m=2;
 
-nnz_jac_g = 0;
+nnz_jac_g = 4;
 nnz_h_lag = 0;
 
 index_style = TNLP::C_STYLE;
@@ -120,9 +120,10 @@ bool Design::get_bounds_info(Index n, Number* x_l, Number* x_u,Index m, Number* 
         x_u[n-1]=1;
    /*Initially the number of constraints is 0. Will have to add it once constraints are modeled*/
                 g_l[0]=33000;
-                g_u[0]=86472;
-                g_u[1]=86472;
-           return true;
+                g_u[0]=239484;
+                g_l[1]=33000;
+                g_u[1]=239484;
+             return true;
 }
 
 
@@ -264,7 +265,7 @@ return true;
 bool Design::eval_g(Index n, const Number* x, bool new_x, Index m, Number* g){
         uint B;
         g[0]=x[0]-x[2] +152471 * x[n-1] ;
-        g[1]=x[0]-x[2] + 152471 * x[n-1];
+        g[1]=-x[0]+x[2] + 152471 * (1-x[n-1]);
     
       
         return true;}
@@ -272,21 +273,21 @@ bool Design::eval_g(Index n, const Number* x, bool new_x, Index m, Number* g){
 bool Design::eval_jac_g(Index n, const Number* x, bool new_x,
                         Index m, Index nele_jac, Index* iRow, Index *jCol,
                         Number* values){
-        /*if (values == NULL) {
+        if (values == NULL) {
                 iRow[0]=0;
                 jCol[0]=0;
                 iRow[1]=0;
-                iRow[1]=1;
+                jCol[1]=1;
                 iRow[2]=1;
-               jCol[2]=0;
+                jCol[2]=0;
                 iRow[3]=1;
-                iRow[3]=1;
+                jCol[3]=1;
         } else {
-                values[0]=-x[2];
-                values[1]=x[0];
-                values[2]=-x[2];
-                values[3]=x[0];
-        }*/
+                values[0]=1;
+                values[1]=-1;
+                values[2]=-1;
+                values[3]=1;
+        }
         //iRow=NULL;
         //jCol=NULL;
         //values=NULL;

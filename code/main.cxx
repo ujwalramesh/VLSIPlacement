@@ -521,6 +521,10 @@ parseArgsAndAddToEnv(string switchName, string switchValue, Env &topEnv)
     rtv = true;
     uint numClusters = strToInt(switchValue);
     topEnv.EnvSetNumClusters(numClusters);
+  } else if (switchName == "numGridPoints") {
+    rtv = true;
+    uint numGridPoints = strToInt(switchValue);
+    topEnv.EnvSetNumGridPoints(numGridPoints);
   } else if (switchName == "hvariation") {
     rtv = true;
     double hVariationPercentage = strToDouble(switchValue);

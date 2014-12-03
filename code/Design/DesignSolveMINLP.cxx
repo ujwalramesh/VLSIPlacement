@@ -95,6 +95,8 @@ getNLPCellsToSolveNew ((*this),cellsToSolve);
 Index numVars= 2*(cellsToSolve.size());
 Number x[numVars];
 
+DesignComputepenaltyParameter();
+
 if (debug) {
         cout << "maxx " << maxx << " maxy " << maxy << endl;
         get_starting_point(numVars,true,x,false,NULL,NULL,2*numVars,false,NULL);
@@ -133,7 +135,7 @@ bonmin.initializeOptionsAndJournalist();
      bonmin.options()->SetIntegerValue("bonmin.bb_log_level",3);
      bonmin.options()->SetIntegerValue("print_level",6);
 //     bonmin.options()->SetStringValue("hessian_approximation","limited-memory");
-     bonmin.options()->SetStringValue("derivative_test","first-order");
+     //bonmin.options()->SetStringValue("derivative_test","first-order");
      bonmin.options()->SetStringValue("output_file","Ipopt.log");
      //Here we read several option files
      bonmin.readOptionsFile("Mybonmin.opt");

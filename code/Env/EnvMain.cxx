@@ -51,6 +51,7 @@ Env::Env()
   /* Initialization of other integer variables */
   EnvSetClusterNumRows(DEFAULT_CLUSTER_NUM_ROWS);
   EnvSetNumClusters(DEFAULT_NUM_CLUSTERS);
+  EnvSetNumGridPoints(DEFAULT_NUM_GRID_POINTS);
   EnvSetNumShapeVariations(DEFAULT_NUM_SHAPE_VARIATIONS);
   EnvSetImbalanceFactor(DEFAULT_IMBALANCE_FACTOR);
   EnvSetNumKHmetisRuns(DEFAULT_NUM_KHMETIS_RUNS);
@@ -676,6 +677,12 @@ Env::EnvSetNumClusters(uint NumClusters)
 }
 
 void 
+Env::EnvSetNumGridPoints(uint NumGridPoints)
+{
+        this->NumGridPoints=NumGridPoints;
+}
+
+void 
 Env::EnvSetNumShapeVariations(uint NumShapeVariations)
 {
   this->NumShapeVariations = NumShapeVariations;
@@ -685,6 +692,12 @@ uint
 Env::EnvGetNumClusters(void)
 {
   return (this->NumClusters);
+}
+
+uint 
+Env::EnvGetNumGridPoints(void)
+{
+        return (this->NumGridPoints);
 }
 
 uint

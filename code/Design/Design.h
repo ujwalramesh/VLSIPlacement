@@ -384,7 +384,16 @@ class Design : public TMINLP,public enable_shared_from_this<Design> {
   map<string, Grid*>& DesignGetGridPoints(void);
   void DesignUpdateGridPotentials(void);
   double DesignComputeTotalDensityPenalty(void);
-  /* End include*/
+  double DesignComputeTotalDensityPenaltyGradient(void);
+  void DesignComputePenaltyGradientforCell(Cell *,double &,double &);
+  void DesignComputePenaltyGradientforCellX(Cell *,double &);
+  void DesignComputePenaltyGradientforCellY(Cell *,double &);
+  double penaltyParameter;
+  void DesignSetpenaltyParameter(double);
+  double DesignGetpenaltyParameter(void); 
+  void DesignComputepenaltyParameter(void);
+   /* End include*/
+   
   vector<Path*> DesignPaths;
   vector<PhysRow*> DesignPhysRows;
   vector<Bin *> DesignBins;
@@ -755,5 +764,5 @@ extern void printVisibleCellsineachCluster ( Design& myDesign, string fname);
 
 /* rameshul inserted to make functions of wnnlp visible to Bonmin*/
 extern void getNLPCellsToSolveNew(Design &myDesign,vector<Cell *> &cellsToSolve);
-extern double myDivideNew(double num, double denom); 
+extern double myDivideNew(double num, double denom);
 #endif

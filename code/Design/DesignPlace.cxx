@@ -363,7 +363,7 @@ Design::DesignRunInternalPlacer(EnvSolverType solverType)
   finalOutputName = DesignName + "postMP";
   string MPlacerLogFile = DesignName + "_shaping_log";
   netModel = DesignEnv.EnvGetNetModel();
-  uint numpoints = 100;
+  uint numPoints = DesignEnv.EnvGetNumGridPoints();
     string gName ;
     Grid *gPtr;
   
@@ -379,10 +379,6 @@ Design::DesignRunInternalPlacer(EnvSolverType solverType)
     DesignSolveForAllCellsConjGradIter();
     break;
   case ENV_SOLVER_NON_LINEAR:
-    /*if (netModel == ENV_CLIQUE_MODEL) {
-    } else if (netModel == ENV_STAR_MODEL) {
-    } else if (netModel == ENV_HYBRID_MODEL) {
-    }*/
 
     /************ rameshul Included*************/
     // The below function creates grid points which are required for the density constraint for the non linear solver
@@ -391,27 +387,27 @@ Design::DesignRunInternalPlacer(EnvSolverType solverType)
     /*Increasing the Number of Grid Points will increase run time*/
     /* Grid points created based on maxx and maxy*/
    
-   DesignCreateGridPoints(numpoints);
+   DesignCreateGridPoints(numPoints);
    DesignUpdateGridPotentials();
    
-    /*DESIGN_FOR_ALL_GRID_POINTS((*this),gName,gPtr){
+    DESIGN_FOR_ALL_GRID_POINTS((*this),gName,gPtr){
             cout << "Gridname: "<<gName<<" GridXpos: " <<(*gPtr).GridGetgridX();
             cout << " GridYpos: "<<(*gPtr).GridGetgridY()<<" gridPot: " << (*gPtr).GridGetgridPotential()<< endl;
-    }DESIGN_END_FOR;*/
+    }DESIGN_END_FOR;
 
     cout << "Begin Non Linear Solver" << endl;
     DesignSolveForAllCellsWnnlpNew();
    
-   /* DESIGN_FOR_ALL_GRID_POINTS((*this),gName,gPtr){
+    DESIGN_FOR_ALL_GRID_POINTS((*this),gName,gPtr){
             cout << "Gridname: "<<gName<<" GridXpos: " <<(*gPtr).GridGetgridX();
             cout << " GridYpos: "<<(*gPtr).GridGetgridY()<<" gridPot: " << (*gPtr).GridGetgridPotential()<< endl;
-    }DESIGN_END_FOR;*/
+    }DESIGN_END_FOR;
 
     /************** No Justification to flow, Just copied from below **********/
     /************* Comment upto End trial if flow fails ******/
 
     //ProfilerStart("ClusterSwapping");
-    DesignDoClusterSwapping();
+    //DesignDoClusterSwapping();
     //ProfilerStop();
            DesignFillCellsInCluster();
     DesignDoClusterFlipping();
@@ -444,7 +440,9 @@ Design::DesignRunInternalPlacer(EnvSolverType solverType)
     break;
   case ENV_SOLVER_MI_NON_LINEAR:
      cout << "Mixed Integer Nonlinear Solver is invoked!" << endl;
-      DesignCreateGridPoints(numpoints);
+      DesignCreateGridPoints(numPoints);
+   DesignUpdateGridPotentials();
+   DesignComputepenaltyParameter();
     /*DESIGN_FOR_ALL_GRID_POINTS((*this),gName,gPtr){
             cout << "Gridname: "<<gName<<" GridXpos: " <<(*gPtr).GridGetgridX();
             cout << " GridYpos: "<<(*gPtr).GridGetgridY()<<" gridPot: " << (*gPtr).GridGetgridPotential()<< endl;

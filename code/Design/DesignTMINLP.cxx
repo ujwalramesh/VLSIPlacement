@@ -212,12 +212,19 @@ bool Design::eval_f(Index n, const Number* x, bool new_x, Number& obj_value){
         }*/
         
         
+       double penaltyParameter;
+         penaltyParameter = (*this).DesignGetpenaltyParameter();
+
+            if (penaltyParameter < 0 ) {
+                  penaltyParameter = -penaltyParameter;
+            }
         
-        
-        obj_value = LseHPWLconv+totalDensityPenalty;
+        obj_value = LseHPWLconv+(penaltyParameter*totalDensityPenalty);
    /*Adding penalty function for density constraint as per Will Naylor's patent*/
       cout << "ulong wirelength is: " << LseHPWL << "\t";
-      cout << "Density Penalty is : " << totalDensityPenalty<<endl;
+      cout << "Density Penalty is : " << penaltyParameter*totalDensityPenalty << "\t";
+      cout << "Density Penalty is : " << obj_value<<endl;
+      
 return true;
 }
 
@@ -228,6 +235,11 @@ bool Design::eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f){
         uint idx=0;
         double cellXpos;
         double cellYpos;
+        double densityPenaltyGradient;
+        double penaltyParameter;
+        penaltyParameter = (*this).DesignGetpenaltyParameter();
+        densityPenaltyGradient = (*this).DesignComputeTotalDensityPenaltyGradient();
+        cout << "Total Density Penalty Gradient: " << densityPenaltyGradient << endl;
         DESIGN_FOR_ALL_CELLS((*this),cellName,cellPtr){
                 if ((*cellPtr).CellIsTerminal()) continue;
                 double gradX=0;
@@ -281,9 +293,14 @@ bool Design::eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f){
                 temp3 = myDivideNew(cellMaxy,pinMaxy);
                 temp4 = myDivideNew(cellMiny,pinMiny);
                 gradY = (temp3)-(temp4);
-                grad_f[idx] = gradX;
-                grad_f[idx+1]=gradY;
-                cout <<"Cell Name: " <<cellName << " CellXpos: "<<cellXpos<< " cellYpos: "<<cellYpos<<" gradX: "<<gradX<<" gradY: "<<gradY<<endl;
+                double gradPotentialX;
+                double gradPotentialY;
+                (*this).DesignComputePenaltyGradientforCell(cellPtr,gradPotentialX,gradPotentialY);
+                grad_f[idx] = gradX + penaltyParameter*gradPotentialX*densityPenaltyGradient;
+                grad_f[idx+1]=gradY + penaltyParameter*gradPotentialY*densityPenaltyGradient;
+                //grad_f[idx] = gradX;
+                //grad_f[idx+1]=gradY;
+                cout <<"Cell Name: " <<cellName << " CellXpos: "<<cellXpos<< " cellYpos: "<<cellYpos<<" gradX: "<<grad_f[idx]<<" gradY: "<<grad_f[idx+1]<<endl;
                 idx=idx+2;
         }DESIGN_END_FOR;
         
