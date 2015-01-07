@@ -234,7 +234,7 @@ bonminX.initializeOptionsAndJournalist();
         <<E.message()<<std::endl;
     }
 //tminlp=NULL;
-/*   DesignSolveMINLPinY = true;     
+   DesignSolveMINLPinY = true;     
 #ifdef REDIRECT
         FILE * fpY = fopen("bonminYLog.out","w");
         CoinMessageHandler handlerY(fpY);
@@ -315,5 +315,5 @@ bonminY.initializeOptionsAndJournalist();
         <<E.message()<<std::endl;
     }
 
-*/
+
 }

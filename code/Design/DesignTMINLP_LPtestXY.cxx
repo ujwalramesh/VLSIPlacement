@@ -112,6 +112,7 @@ bool Design::get_bounds_info(Index n, Number* x_l, Number* x_u,Index m, Number* 
         uint YupperBound = maxy-averageClusterHeight;
 
         uint idx=0;
+  if (!DesignSolveMINLPinY){
         // Lower bound for x and y variable is 0 but the upperbound is maxx/maxy - averageClusterWidth/averageClusterHeight 
         for (idx=0;idx<n-2;idx++){
                 x_l[idx]=0; 
@@ -133,6 +134,25 @@ bool Design::get_bounds_info(Index n, Number* x_l, Number* x_u,Index m, Number* 
      //           g_u[2]=239484;
      //           g_l[3]=33000;
      //           g_u[3]=239484;
+    } else {
+
+        for (idx=0;idx<n-2;idx++){
+                x_l[idx]=0; 
+             //   x_l[idx+1]=0;
+            //    x_u[idx]=XupperBound;
+                x_u[idx]=YupperBound;
+              //  idx=idx+1;
+        }
+        x_l[n-1]=0;
+        x_u[n-1]=1;
+   //     x_l[n-2]=0;
+   //     x_u[n-2]=1;
+   /*Initially the number of constraints is 0. Will have to add it once constraints are modeled*/
+                g_l[0]=33000;
+                g_u[0]=239484;
+                g_l[1]=33000;
+                g_u[1]=239484;
+        }
              return true;
 }
 
@@ -156,14 +176,25 @@ bool Design::get_starting_point(Index n, bool init_x, Number* x,bool init_z, Num
         //map<uint, Cell *> cellToSolveMap;
 
         //map<uint, Cell *>::iterator cellToSolveMapItr; 
+  if (!DesignSolveMINLPinY){
         VECTOR_FOR_ALL_ELEMS(cellsToSolve,Cell *, cellPtr){
         //     cout << "populating Inital values for cell: " << (*cellPtr).CellGetName();
                 x[idx] = (*cellPtr).CellGetXposDbl();
              //   x[idx+1] = (*cellPtr).CellGetYposDbl();
                //      cellToSolveMap[idx] = CellPtr;
-               cout << "\t Xpos: " << x[idx] << "\t Ypos: " << x[idx+1] << "\t actualXpos: " << (*cellPtr).CellGetXposDbl() << "\t actualYpos: " << (*cellPtr).CellGetYposDbl()<< endl;
+               cout << "\t Xpos: " << x[idx] << "\t actualXpos: " << (*cellPtr).CellGetXposDbl() << "\t actualYpos: " << (*cellPtr).CellGetYposDbl()<< endl;
                idx = idx+1;
-}END_FOR;
+        }END_FOR;
+  } else {
+        VECTOR_FOR_ALL_ELEMS(cellsToSolve,Cell *, cellPtr){
+        //     cout << "populating Inital values for cell: " << (*cellPtr).CellGetName();
+                x[idx] = (*cellPtr).CellGetXposDbl();
+             //   x[idx+1] = (*cellPtr).CellGetYposDbl();
+               //      cellToSolveMap[idx] = CellPtr;
+               cout << "\t Ypos: " << x[idx] << "\t actualXpos: " << (*cellPtr).CellGetXposDbl() << "\t actualYpos: " << (*cellPtr).CellGetYposDbl()<< endl;
+               idx = idx+1;
+        }END_FOR;
+  }      
 x[n-1]=0;
 //x[n-2]=0;
 
@@ -182,7 +213,9 @@ bool Design::eval_f(Index n, const Number* x, bool new_x, Number& obj_value){
   Cell *cellPtr;
   string cellName;
   uint idx=0;
-        //cout << " Void pointer Type: " <<typeid(*((Design*)myDesign)).name() << endl;  
+        //cout << " Void pointer Type: " <<typeid(*((Design*)myDesign)).name() << endl; 
+  if (!DesignSolveMINLPinY){
+          idx =0;
         DESIGN_FOR_ALL_CELLS((*this),cellName,cellPtr){
 //                cout << "Changing Xposition for cell: " << (*cellPtr).CellGetName() << " to " << values[idx] << endl;
                    if ((*cellPtr).CellIsTerminal()) continue;     
@@ -192,6 +225,19 @@ bool Design::eval_f(Index n, const Number* x, bool new_x, Number& obj_value){
                 idx = idx+1;
 
         }END_FOR;
+  } else {
+        idx=0;
+        DESIGN_FOR_ALL_CELLS((*this),cellName,cellPtr){
+//                cout << "Changing Xposition for cell: " << (*cellPtr).CellGetName() << " to " << values[idx] << endl;
+                   if ((*cellPtr).CellIsTerminal()) continue;     
+         //       (*cellPtr).CellSetXposDbl(x[idx]);
+                (*cellPtr).CellSetYposDbl(x[idx]);
+  //              cout << "The new Xposition of the cell is " << (*cellPtr).CellGetXpos() << endl;
+                idx = idx+1;
+
+        }END_FOR;
+  }
+
         ulong LseHPWL;
         double LseHPWLconv;
         LseHPWL = (*this).DesignComputeLseHPWL();
@@ -215,6 +261,8 @@ bool Design::eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f){
         uint idx=0;
         double cellXpos;
         double cellYpos;
+  if (!DesignSolveMINLPinY){
+          idx =0;
         DESIGN_FOR_ALL_CELLS((*this),cellName,cellPtr){
                 if ((*cellPtr).CellIsTerminal()) continue;
                 double gradX=0;
@@ -273,7 +321,67 @@ bool Design::eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f){
                 cout <<"Cell Name: " <<cellName << " CellXpos: "<<cellXpos<< " cellYpos: "<<cellYpos<<" gradX: "<<gradX<<" gradY: "<<gradY<<endl;
                 idx=idx+1;
         }DESIGN_END_FOR;
-        
+  } else {
+        idx=0;
+        DESIGN_FOR_ALL_CELLS((*this),cellName,cellPtr){
+                if ((*cellPtr).CellIsTerminal()) continue;
+                double gradX=0;
+                double gradY=0;
+                double cellMaxx;
+                double cellMinx;
+                double cellMaxy;
+                double cellMiny;
+                cellXpos = (*cellPtr).CellGetXposDbl();
+                cellYpos = (*cellPtr).CellGetYposDbl();
+                Net *netPtr;
+                double sumPinsPos;
+                double pinMaxx;
+                double pinMinx;
+                double pinMaxy;
+                double pinMiny;
+                double tempDivideX;
+                double tempDivideY;
+                double pinXpos;
+                double pinYpos;
+                CELL_FOR_ALL_NETS_NO_DIR((*cellPtr),netPtr){
+                        Pin *pinPtr;
+                        NET_FOR_ALL_PINS((*netPtr),pinPtr){
+                                Cell* cellParentPtr;
+                                cellParentPtr = (*pinPtr).PinGetParentCellPtr();
+                                pinXpos = pinPtr->xOffset + cellParentPtr->x;
+                                pinYpos = pinPtr->yOffset + cellParentPtr->y;
+                                tempDivideX= myDivideNew(pinXpos,alpha);
+                                tempDivideY= myDivideNew(pinYpos,alpha);
+                                pinMaxx += exp(tempDivideX);
+                                pinMinx +=myDivideNew(1,exp(tempDivideX));
+                                pinMaxy += exp(tempDivideY);
+                                pinMiny +=myDivideNew(1,exp(tempDivideY));
+                        }NET_END_FOR;
+                }CELL_END_FOR;
+                double tempDivX;
+                double tempDivY;
+                tempDivX = myDivideNew(cellXpos,alpha);
+                tempDivY = myDivideNew(cellYpos,alpha);
+                cellMaxx = exp(tempDivX);
+                cellMinx = myDivideNew(1,exp(tempDivX));
+                cellMaxy = exp(tempDivY);
+                cellMiny = myDivideNew(1,exp(tempDivY));
+                double temp1;
+                double temp2;
+                temp1 = myDivideNew(cellMaxx,pinMaxx);
+                temp2 = myDivideNew(cellMinx,pinMinx);
+                gradX = (temp1)-(temp2);
+                double temp3;
+                double temp4;
+                temp3 = myDivideNew(cellMaxy,pinMaxy);
+                temp4 = myDivideNew(cellMiny,pinMiny);
+                gradY = (temp3)-(temp4);
+              //  grad_f[idx] = gradX;
+                grad_f[idx]=gradY;
+                cout <<"Cell Name: " <<cellName << " CellXpos: "<<cellXpos<< " cellYpos: "<<cellYpos<<" gradX: "<<gradX<<" gradY: "<<gradY<<endl;
+                idx=idx+1;
+        }DESIGN_END_FOR;
+ }       
 return true;
 }
 
