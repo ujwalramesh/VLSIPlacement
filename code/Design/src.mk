@@ -4,6 +4,6 @@ SRCFILES:=  DesignMain DesignUtils DesignRead DesignGraph  DesignAnalysis Design
 	    DesignSolveFastConjGrad DesignPlace DesignCluster DesignClusterStrategy \
 	    DesignClusterBestChoice DesignClusterNetCluster DesignClusterKWay DesignClusterLarge \
 	    DesignWriteCluster DesignSolveForceDirected DesignDump DesignSolveWnnlpNew \
-            DesignGrid DesignSolveMINLP DesignTMINLP_LPtest 
+            DesignGrid DesignSolveMINLPXY DesignTMINLP_LPtestXY 
 
 HFILES:= Design DesignIter PriorityQueue HyperGraph Cell Pin Net Env 

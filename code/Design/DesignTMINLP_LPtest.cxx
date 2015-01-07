@@ -45,7 +45,8 @@ bool Design::get_variables_types(Index n, VariableType* var_types){
                 var_types[i]=CONTINUOUS;
       
         }
-        var_types[numVars]=INTEGER;
+        var_types[numVars]=BINARY;
+     //   var_types[numVars+1]=INTEGER;
        
 return true;
 }
@@ -62,6 +63,7 @@ bool Design::get_variables_linearity(Index n, Ipopt::TNLP::LinearityType* var_ty
                 var_types[i]=Ipopt::TNLP::NON_LINEAR;
         }
         var_types[numVars]=Ipopt::TNLP::LINEAR;
+       // var_types[numVars+1]=Ipopt::TNLP::LINEAR;
         
 return true;
 }
@@ -69,6 +71,8 @@ return true;
 bool Design::get_constraints_linearity(Index m, Ipopt::TNLP::LinearityType* const_types){
         const_types[0]=Ipopt::TNLP::LINEAR;
         const_types[1]=Ipopt::TNLP::LINEAR;
+        //const_types[2]=Ipopt::TNLP::LINEAR;
+        //const_types[3]=Ipopt::TNLP::LINEAR;
    
 
         return true;}
@@ -81,8 +85,8 @@ int size = 2*(cellsToSolve.size());
 n = size+1;
 m=2;
 
-nnz_jac_g = 4;
-nnz_h_lag = 0;
+nnz_jac_g = 6;
+//nnz_h_lag = 0;
 
 index_style = TNLP::C_STYLE;
 
@@ -109,7 +113,7 @@ bool Design::get_bounds_info(Index n, Number* x_l, Number* x_u,Index m, Number* 
 
         uint idx=0;
         // Lower bound for x and y variable is 0 but the upperbound is maxx/maxy - averageClusterWidth/averageClusterHeight 
-        for (idx=0;idx<n-2;idx++){
+        for (idx=0;idx<n-1;idx++){
                 x_l[idx]=0; 
                 x_l[idx+1]=0;
                 x_u[idx]=XupperBound;
@@ -118,11 +122,17 @@ bool Design::get_bounds_info(Index n, Number* x_l, Number* x_u,Index m, Number* 
         }
         x_l[n-1]=0;
         x_u[n-1]=1;
+   //     x_l[n-2]=0;
+   //     x_u[n-2]=1;
    /*Initially the number of constraints is 0. Will have to add it once constraints are modeled*/
                 g_l[0]=33000;
                 g_u[0]=239484;
                 g_l[1]=33000;
                 g_u[1]=239484;
+     //           g_l[2]=33000;
+     //           g_u[2]=239484;
+     //           g_l[3]=33000;
+     //           g_u[3]=239484;
              return true;
 }
 
@@ -154,7 +164,8 @@ bool Design::get_starting_point(Index n, bool init_x, Number* x,bool init_z, Num
                cout << "\t Xpos: " << x[idx] << "\t Ypos: " << x[idx+1] << "\t actualXpos: " << (*cellPtr).CellGetXposDbl() << "\t actualYpos: " << (*cellPtr).CellGetYposDbl()<< endl;
                idx = idx+2;
 }END_FOR;
-x[n-1]=0;
+x[n-1]=1;
+//x[n-2]=0;
 
 
 
@@ -164,7 +175,9 @@ return true;
 /* The below function computes the value of the objective*/
 
 bool Design::eval_f(Index n, const Number* x, bool new_x, Number& obj_value){
-        
+  
+  static int objIterationCount=0;
+  double totalOverLap;
   /* objective here is total_wirelength = sum over all nets ( wirelength (net) * net weight) */ 
   Cell *cellPtr;
   string cellName;
@@ -184,10 +197,18 @@ bool Design::eval_f(Index n, const Number* x, bool new_x, Number& obj_value){
         LseHPWL = (*this).DesignComputeLseHPWL();
         LseHPWLconv=LseHPWL; 
         double totalDensityPenalty=0;
+        totalOverLap = (*this).DesignDumpClusterOverlapForPenalty();
         //(*this).DesignUpdateGridPotentials();
         //totalDensityPenalty =(*this).DesignComputeTotalDensityPenalty();
         obj_value = LseHPWLconv+totalDensityPenalty;
+        cout << "percentage overlap for iteration " << objIterationCount << " of current cell combination is: " << totalOverLap << "\tobjective value is: " << obj_value <<  endl;
+        objIterationCount++;
    /*Adding penalty function for density constraint as per Will Naylor's patent*/
+        if (totalOverLap < 400 ) { 
+                for (int i=0;i<n;i++){
+                        cout << "x["<<i << "]= " << x[i] <<endl;
+                }   
+        }    
         
 return true;
 }
@@ -266,6 +287,8 @@ bool Design::eval_g(Index n, const Number* x, bool new_x, Index m, Number* g){
         uint B;
         g[0]=x[0]-x[2] +152471 * x[n-1] ;
         g[1]=-x[0]+x[2] + 152471 * (1-x[n-1]);
+  //      g[2]=x[2]-x[4]+152471 * x[n-1];
+   //     g[3]=-x[2]+x[4]+152471*(1-x[n-1]);
     
       
         return true;}
@@ -278,16 +301,28 @@ bool Design::eval_jac_g(Index n, const Number* x, bool new_x,
                 jCol[0]=0;
                 iRow[1]=0;
                 jCol[1]=1;
-                iRow[2]=1;
-                jCol[2]=0;
+                iRow[2]=0;
+                jCol[2]=2;
                 iRow[3]=1;
-                jCol[3]=1;
+                jCol[3]=0;
+                iRow[4]=1;
+                jCol[4]=1;
+                iRow[5]=1;
+                jCol[5]=2;
+      //          iRow[6]=3;
+     //           jCol[6]=0;
+    //            iRow[7]=3;
+     //           jCol[7]=1;
         } else {
                 values[0]=1;
                 values[1]=-1;
-                values[2]=-1;
-                values[3]=1;
-        }
+                values[2]=152471;
+                values[3]=-1;
+                values[4]=1;
+                values[5]=-152471;
+     //           values[6]=-1;
+    //            values[7]=1;
+       
         //iRow=NULL;
         //jCol=NULL;
         //values=NULL;
@@ -295,6 +330,7 @@ bool Design::eval_jac_g(Index n, const Number* x, bool new_x,
 
        
         return true;}
+}
 
 bool Design::eval_h(Index n, const Number* x, bool new_x,
                         Number obj_factor, Index m, const Number* lambda,
@@ -305,7 +341,33 @@ bool Design::eval_h(Index n, const Number* x, bool new_x,
         //values=NULL;
         //lambda=NULL;
         
-        return true;}
+        return false;}
+
+Index Design::get_number_of_nonlinear_variables(void){
+
+        std::vector<Cell *> cellsToSolve;
+        getNLPCellsToSolveNew ((*this),cellsToSolve);
+        Index size = 2*cellsToSolve.size();
+        return size;
+}
+
+
+bool Design::get_list_of_nonlinear_variables(Index num_nonlin_vars,Index* pos_nonlin_vars) {
+
+
+     
+        std::vector<Cell *> cellsToSolve;
+        getNLPCellsToSolveNew ((*this),cellsToSolve);
+        Index size = 2*cellsToSolve.size();
+        assert (num_nonlin_vars == size);
+     
+        for (int i=0;i<size;i++){
+                  pos_nonlin_vars[i]=i;
+        }   
+
+
+        return true;
+}
 
 void Design::finalize_solution(TMINLP::SolverReturn status,
                                 Index n, const Number* x, Number obj_value){

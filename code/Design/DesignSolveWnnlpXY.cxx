@@ -216,7 +216,8 @@ gradientFuncX(double *grad,int size,double *values,ptr myDesign)
                 double gradPotentialX;
               //  double gradPotentialY;
                 (*((Design*)myDesign)).DesignComputePenaltyGradientforCellX(cellPtr,gradPotentialX);
-                grad[idx] = gradX + penaltyParameter*gradPotentialX*densityPenaltyGradient;
+                grad[idx] = gradX + penaltyParameter*gradPotentialX*alpha;
+                //grad[idx] = gradX + penaltyParameter*gradPotentialX*densityPenaltyGradient;
                 //grad[idx] = gradX + penaltyParameter*gradPotentialX;
                 //grad[idx+1]=gradY + penaltyParameter*gradPotentialY*densityPenaltyGradient;
                 //grad[idx] = gradX + 0.5*gradPotentialX;
@@ -312,7 +313,8 @@ gradientFuncY(double *grad,int size,double *values,ptr myDesign)
                 double gradPotentialY;
                 (*((Design*)myDesign)).DesignComputePenaltyGradientforCellY(cellPtr,gradPotentialY);
               //  grad[idx] = gradX + penaltyParameter*gradPotentialX*densityPenaltyGradient;
-                grad[idx]=gradY + penaltyParameter*gradPotentialY*densityPenaltyGradient;
+                grad[idx]=gradY + penaltyParameter*gradPotentialY*alpha;
+                //grad[idx]=gradY + penaltyParameter*gradPotentialY*densityPenaltyGradient;
                // grad[idx]=gradY + penaltyParameter*gradPotentialY;
                 //grad[idx] = gradX + 0.5*gradPotentialX;
                 //grad[idx+1]=gradY + 0.5*gradPotentialY;

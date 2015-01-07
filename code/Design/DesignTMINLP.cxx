@@ -219,7 +219,8 @@ bool Design::eval_f(Index n, const Number* x, bool new_x, Number& obj_value){
                   penaltyParameter = -penaltyParameter;
             }
         
-        obj_value = LseHPWLconv+(penaltyParameter*totalDensityPenalty);
+        //obj_value = LseHPWLconv+(penaltyParameter*totalDensityPenalty);
+        obj_value = LseHPWLconv;
    /*Adding penalty function for density constraint as per Will Naylor's patent*/
       cout << "ulong wirelength is: " << LseHPWL << "\t";
       cout << "Density Penalty is : " << penaltyParameter*totalDensityPenalty << "\t";
@@ -296,10 +297,10 @@ bool Design::eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f){
                 double gradPotentialX;
                 double gradPotentialY;
                 (*this).DesignComputePenaltyGradientforCell(cellPtr,gradPotentialX,gradPotentialY);
-                grad_f[idx] = gradX + penaltyParameter*gradPotentialX*densityPenaltyGradient;
-                grad_f[idx+1]=gradY + penaltyParameter*gradPotentialY*densityPenaltyGradient;
-                //grad_f[idx] = gradX;
-                //grad_f[idx+1]=gradY;
+                //grad_f[idx] = gradX + penaltyParameter*gradPotentialX*densityPenaltyGradient;
+                //grad_f[idx+1]=gradY + penaltyParameter*gradPotentialY*densityPenaltyGradient;
+                grad_f[idx] = gradX;
+                grad_f[idx+1]=gradY;
                 cout <<"Cell Name: " <<cellName << " CellXpos: "<<cellXpos<< " cellYpos: "<<cellYpos<<" gradX: "<<grad_f[idx]<<" gradY: "<<grad_f[idx+1]<<endl;
                 idx=idx+2;
         }DESIGN_END_FOR;
@@ -350,6 +351,35 @@ bool Design::eval_h(Index n, const Number* x, bool new_x,
         //lambda=NULL;
         
         return true;}
+
+
+
+Index Design::get_number_of_nonlinear_variables(void){
+
+        std::vector<Cell *> cellsToSolve;
+        getNLPCellsToSolveNew ((*this),cellsToSolve);
+        Index size = 2*cellsToSolve.size();
+        return size;
+}
+
+
+bool Design::get_list_of_nonlinear_variables(Index num_nonlin_vars,Index* pos_nonlin_vars) {
+
+
+     
+        std::vector<Cell *> cellsToSolve;
+        getNLPCellsToSolveNew ((*this),cellsToSolve);
+        Index size = 2*cellsToSolve.size();
+        assert (num_nonlin_vars == size);
+     
+        for (int i=0;i<size;i++){
+                  pos_nonlin_vars[i]=i;
+        }   
+
+
+        return true;
+}
+       
 
 void Design::finalize_solution(TMINLP::SolverReturn status,
                                 Index n, const Number* x, Number obj_value){

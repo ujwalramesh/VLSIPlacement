@@ -471,9 +471,9 @@ Design::DesignComputepenaltyParameter(void){
   double totalDensityPenaltyGradient;
   totalDensityPenaltyGradient = DesignComputeTotalDensityPenaltyGradient();
   penaltyParameter= (WLgradientTotal/penaltyGradientTotal);
-  if (penaltyParameter < 0 ) {
+  /*if (penaltyParameter < 0 ) {
           penaltyParameter = -penaltyParameter;
-  }
+  }*/
   cout << "WLgradientTotal is: " << WLgradientTotal << " penaltyGradientTotal is: " << penaltyGradientTotal ; 
   cout << " penaltyParameterInitial Value is: " << penaltyParameter << endl;
   DesignSetpenaltyParameter(penaltyParameter);

@@ -45,6 +45,9 @@ bool Design::get_variables_types(Index n, VariableType* var_types){
                 var_types[i]=CONTINUOUS;
       
         }
+        for (int i = numVars; i < n;i++){
+                var_types[i]=INTEGER;
+        }
        
 return true;
 }
@@ -59,6 +62,9 @@ bool Design::get_variables_linearity(Index n, Ipopt::TNLP::LinearityType* var_ty
         int numVars = 2*(cellsToSolve.size());
         for (int i=0;i<numVars;i++){
                 var_types[i]=Ipopt::TNLP::NON_LINEAR;
+        }
+        for (int i=numVars;i<n;i++){
+                var_types[i]=Ipopt::TNLP::LINEAR;
         }
         
 return true;
@@ -75,12 +81,12 @@ bool Design::get_nlp_info(Index& n, Index&m, Index& nnz_jac_g,Index& nnz_h_lag, 
 
 std::vector<Cell *> cellsToSolve;
 getNLPCellsToSolveNew ((*this),cellsToSolve);
-int size = 2*(cellsToSolve.size());
-n = size;
-m=(((size/2)*((size/2)+1))/2)*2;
-
-nnz_jac_g = m*2;
-nnz_h_lag = 0;
+int size = (cellsToSolve.size());
+int numVars = size*2;
+m=(size *(size-1))*2;
+n= numVars+(m/2);
+nnz_jac_g = m*3;
+//nnz_h_lag = 0;
 
 index_style = TNLP::C_STYLE;
 
@@ -94,39 +100,62 @@ return true;
 bool Design::get_bounds_info(Index n, Number* x_l, Number* x_u,Index m, Number* g_l, Number* g_u){
         
         uint maxx,maxy;
-
         DesignGetBoundingBox(maxx,maxy);
 
-        uint averageClusterWidth,averageClusterHeight;
+        std::vector<Cell *> cellsToSolve;
+        getNLPCellsToSolveNew ((*this),cellsToSolve);
+        
+        int size = cellsToSolve.size();
+        int numVars = 2*size;
 
+        uint averageClusterWidth,averageClusterHeight;
         averageClusterWidth = (uint)DesignGetAverageClusterCellWidth();
         averageClusterHeight = (uint)DesignGetAverageClusterCellHeight();
 
         uint XupperBound = maxx-averageClusterWidth;
         uint YupperBound = maxy-averageClusterHeight;
 
+        uint ConstraintXupperBound = maxx*2;
+        uint ConstraintYupperBound = maxy*2;
+
         uint idx=0;
         // Lower bound for x and y variable is 0 but the upperbound is maxx/maxy - averageClusterWidth/averageClusterHeight 
-        for (idx=0;idx<n;idx++){
+        for (idx=0;idx<(numVars-1);idx++){
                 x_l[idx]=0; 
                 x_l[idx+1]=0;
                 x_u[idx]=XupperBound;
                 x_u[idx+1]=YupperBound;
                 idx=idx+1;
         }
-   /*Initially the number of constraints is 0. Will have to add it once constraints are modeled*/
-        idx=0;
-        int numOneDConst = m/2;
-   for (idx=0;idx<numOneDConst;idx++){
-           g_l[idx]=averageClusterWidth;
-           g_u[idx]=maxx;
-   }
-   idx=0;
-   for (idx=numOneDConst;idx<m;idx++){
-           g_l[idx]=averageClusterHeight;
-           g_u[idx]=maxy;
-   }
-   
+
+       for (idx = numVars ; idx <n;idx++){
+                x_l[idx]=0.;
+                x_u[idx]=1.;
+        }
+
+   /*Bounds for constraints is defined here*/
+        uint idx2=0;
+        for (idx2=0;idx2 < (m/2)-1;idx2++){
+                g_l[idx2]=averageClusterWidth;
+                g_u[idx2]=ConstraintXupperBound;
+                idx2=idx2+1;
+                g_l[idx2]=averageClusterWidth;
+                g_u[idx2]=ConstraintXupperBound;
+         }
+         for (idx2 = (m/2); idx2< (m-1);idx2++){
+                g_l[idx2]=averageClusterHeight;
+                g_u[idx2]=ConstraintYupperBound;
+                idx2=idx2+1;
+                g_l[idx2]=averageClusterHeight;
+                g_u[idx2]=ConstraintYupperBound;
+        } 
+        /*for (idx2=0;idx2 < m-1;idx2++){
+                g_l[idx2]=averageClusterWidth;
+                g_u[idx2]=ConstraintXupperBound;
+                idx2=idx2+1;
+                g_l[idx2]=averageClusterWidth;
+                g_u[idx2]=ConstraintXupperBound;
+         }*/
            return true;
 }
 
@@ -146,6 +175,7 @@ bool Design::get_starting_point(Index n, bool init_x, Number* x,bool init_z, Num
         getNLPCellsToSolveNew ((*this),cellsToSolve);
         
         int size = cellsToSolve.size();
+        int numVars = size*2;
         cout << "Size of cells: " << size << endl;
         //map<uint, Cell *> cellToSolveMap;
 
@@ -157,7 +187,11 @@ bool Design::get_starting_point(Index n, bool init_x, Number* x,bool init_z, Num
                //      cellToSolveMap[idx] = CellPtr;
                cout << "\t Xpos: " << x[idx] << "\t Ypos: " << x[idx+1] << "\t actualXpos: " << (*cellPtr).CellGetXposDbl() << "\t actualYpos: " << (*cellPtr).CellGetYposDbl()<< endl;
                idx = idx+2;
-}END_FOR;
+        }END_FOR;
+
+        for (int i=numVars;i<n;i++){
+                x[i]=0;
+        }
 
 
 return true;
@@ -168,6 +202,7 @@ return true;
 bool Design::eval_f(Index n, const Number* x, bool new_x, Number& obj_value){
         
   /* objective here is total_wirelength = sum over all nets ( wirelength (net) * net weight) */ 
+  static int objIterationCount=0;
   Cell *cellPtr;
   string cellName;
   uint idx=0;
@@ -186,16 +221,29 @@ bool Design::eval_f(Index n, const Number* x, bool new_x, Number& obj_value){
         LseHPWL = (*this).DesignComputeLseHPWL();
         LseHPWLconv=LseHPWL; 
         double totalDensityPenalty=0;
+        double totalOverLap;
+        totalOverLap = (*this).DesignDumpClusterOverlapForPenalty();
         //(*this).DesignUpdateGridPotentials();
         //totalDensityPenalty =(*this).DesignComputeTotalDensityPenalty();
         obj_value = LseHPWLconv+totalDensityPenalty;
+        //obj_value = LseHPWLconv+pow(totalOverLap,3);
    /*Adding penalty function for density constraint as per Will Naylor's patent*/
+        cout << "percentage overlap for iteration " << objIterationCount << " of current cell combination is: " << totalOverLap << "\tobjective value is: " << obj_value <<  endl;
+        if (totalOverLap < 30 ) {
+                for (int i=0;i<n;i++){
+                        cout << "x["<<i << "]= " << x[i] <<endl;
+                }
+        }
+        objIterationCount++;
         
 return true;
 }
 
 bool Design::eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f){
         Cell *cellPtr;
+        static int objIterationCount=0;
+        cout << "Iteration Number: " << objIterationCount << endl;
+        objIterationCount++;
         string cellName;
         uint alpha = 500;
         uint idx=0;
@@ -228,31 +276,43 @@ bool Design::eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f){
                                 cellParentPtr = (*pinPtr).PinGetParentCellPtr();
                                 pinXpos = pinPtr->xOffset + cellParentPtr->x;
                                 pinYpos = pinPtr->yOffset + cellParentPtr->y;
-                                tempDivideX= myDivideNew(pinXpos,alpha);
-                                tempDivideY= myDivideNew(pinYpos,alpha);
+                           //     tempDivideX= myDivideNew(pinXpos,alpha);
+                           //     tempDivideY= myDivideNew(pinYpos,alpha);
+                                tempDivideX= (pinXpos/alpha);
+                                tempDivideY= (pinYpos/alpha);
                                 pinMaxx += exp(tempDivideX);
-                                pinMinx +=myDivideNew(1,exp(tempDivideX));
+                            //    pinMinx +=myDivideNew(1,exp(tempDivideX));
+                                pinMinx +=(1/exp(tempDivideX));
                                 pinMaxy += exp(tempDivideY);
-                                pinMiny +=myDivideNew(1,exp(tempDivideY));
+                            //    pinMiny +=myDivideNew(1,exp(tempDivideY));
+                                pinMiny += (1/exp(tempDivideY));
                         }NET_END_FOR;
                 }CELL_END_FOR;
                 double tempDivX;
                 double tempDivY;
-                tempDivX = myDivideNew(cellXpos,alpha);
-                tempDivY = myDivideNew(cellYpos,alpha);
+              //  tempDivX = myDivideNew(cellXpos,alpha);
+              //  tempDivY = myDivideNew(cellYpos,alpha);
+                tempDivX = (cellXpos/alpha);
+                tempDivY = (cellYpos/alpha);
                 cellMaxx = exp(tempDivX);
-                cellMinx = myDivideNew(1,exp(tempDivX));
+              //  cellMinx = myDivideNew(1,exp(tempDivX));
+                cellMinx = (1/exp(tempDivX));
                 cellMaxy = exp(tempDivY);
-                cellMiny = myDivideNew(1,exp(tempDivY));
+              //  cellMiny = myDivideNew(1,exp(tempDivY));
+                cellMiny = (1/exp(tempDivY));
                 double temp1;
                 double temp2;
-                temp1 = myDivideNew(cellMaxx,pinMaxx);
-                temp2 = myDivideNew(cellMinx,pinMinx);
+              //  temp1 = myDivideNew(cellMaxx,pinMaxx);
+              //  temp2 = myDivideNew(cellMinx,pinMinx);
+                temp1 = (cellMaxx/pinMaxx);
+                temp2 = (cellMinx/pinMinx);
                 gradX = (temp1)-(temp2);
                 double temp3;
                 double temp4;
-                temp3 = myDivideNew(cellMaxy,pinMaxy);
-                temp4 = myDivideNew(cellMiny,pinMiny);
+               // temp3 = myDivideNew(cellMaxy,pinMaxy);
+               // temp4 = myDivideNew(cellMiny,pinMiny);
+                temp3 = (cellMaxy/pinMaxy);
+                temp4 = (cellMiny/pinMiny);
                 gradY = (temp3)-(temp4);
                 grad_f[idx] = gradX;
                 grad_f[idx+1]=gradY;
@@ -269,85 +329,170 @@ bool Design::eval_g(Index n, const Number* x, bool new_x, Index m, Number* g){
         std::vector<Cell *> cellsToSolve;
         getNLPCellsToSolveNew ((*this),cellsToSolve);
         int size = 2*cellsToSolve.size();
-        int idx2=0;
+        uint maxx,maxy;
+        DesignGetBoundingBox(maxx,maxy);
+       
+        uint averageClusterWidth,averageClusterHeight;
+        averageClusterWidth = (uint)DesignGetAverageClusterCellWidth();
+        averageClusterHeight = (uint)DesignGetAverageClusterCellHeight();
+
+        uint Mx,My;
+
+        Mx = maxx + averageClusterWidth;
+        My = maxy + averageClusterHeight;
+       
+       
+       int idx2=0;
         for (int i=0;i<size;i=i+2) {
                       for (int j=0;j<size;j=j+2){
-                              if (j <= i) continue;
-                                if (x[i]>=x[j]){
-                                        g[idx] = x[i]-x[j] ;
+                              if (j <= i ) continue;
+                                        g[idx] = x[i]-x[j] + Mx * x[size+idx2];
                                         idx=idx+1;
-                                }else {     
-                                        g[idx] =x[j]-x[i] ;
+                                        g[idx] = -x[i]+x[j] + Mx * (1-x[size+idx2]);
                                         idx=idx+1;
-                              }
+                                        idx2=idx2+1;
                       }
-        }
+         }
         for (int i=1;i<size;i=i+2) {
                       for (int j=1;j<size;j=j+2){
                               if (j <= i) continue;
-                                if (x[i]>=x[j]){
-                                        g[idx] = x[i]-x[j] ;
+                                        g[idx] = x[i]-x[j] + My * x[size+idx2];
                                         idx=idx+1;
-                                }else {     
-                                        g[idx] =x[j]-x[i] ;
+                                        g[idx] = -x[i]+x[j] + My * (1-x[size+idx2]);
                                         idx=idx+1;
+                                        idx2=idx2+1;
                               }
-                      }
-         }
-              
+        }
 
         return true;}
 
+/*
 bool Design::eval_jac_g(Index n, const Number* x, bool new_x,
                         Index m, Index nele_jac, Index* iRow, Index *jCol,
                         Number* values){
+        std::vector<Cell *> cellsToSolve;
+        getNLPCellsToSolveNew ((*this),cellsToSolve);
+        int size = 2*cellsToSolve.size();
         if (values==NULL){
-                int idj =0;
-                for (int idx=0;idx<m;idx++){
-                        iRow[idj]=idx;
-                        jCol[idj]=0;
-                        idj=idj+1;
-                        iRow[idj]=idx;
-                        jCol[idj]=1;
-                        idj=idj+1;
-                }
+                int idx=0;
+                for (int i=0;i<m;i++){
+                        iRow[idx]=i;
+                        jCol[idx]=0;
+                        idx=idx+1;
+                        iRow[idx]=i;
+                        jCol[idx]=1;
+                        idx=idx+1;
+                }                
+
        } else {
 
-       int idx=0;  
-        for (int i=0;i<n;i=i+2) {
-                      for (int j=0;j<n;j=j+2){
-                              if (j <= i) continue;
+               int idx2=0;
+               for (int i=0;i<size;i=i+2){
+                       for (int j=0 ;j <size;j=j+2){
+                               if (j <=i) continue;
+                                        values[idx2]=1;
+                                        idx2=idx2+1;
+                                        values[idx2]=-1;
+                                        idx2=idx2+1;
+                                        values[idx2]=-1;
+                                        idx2=idx2+1;
+                                        values[idx2]=1;
+                                        idx2=idx2+1;
+                        }
+               }
+               for (int i=1;i<size;i=i+2){
+                       for (int j=1 ;j <size;j=j+2){
+                               if (j <=i) continue;
+                                        values[idx2]=1;
+                                        idx2=idx2+1;
+                                        values[idx2]=-1;
+                                        idx2=idx2+1;
+                                        values[idx2]=-1;
+                                        idx2=idx2+1;
+                                        values[idx2]=1;
+                                        idx2=idx2+1;
+                        }
+               }
 
-                                if (x[i]>=x[j]){
-                              values[idx] = x[i];
-                              idx=idx+1;
-                              values[idx] = -x[j];
-                              idx=idx+1;
-                              } else {
-                              values[idx] =-x[i];
-                              idx=idx+1;
-                              values[idx] = x[j];
-                              idx=idx+1;
-                              }
-                      }
-        }
-        for (int i=1;i<n;i=i+2) {
-                      for (int j=1;j<n;j=j+2){
-                              if (j <= i) continue;
-                              if(x[i] >= x[j]){
-                              values[idx] = x[i];
-                              idx=idx+1;
-                              values[idx] = -x[j];
-                              idx=idx+1;
-                              } else {
-                              values[idx] =-x[i];
-                              idx=idx+1;
-                              values[idx] = x[j];
-                              idx=idx+1;
-                              }
-                      }
-         }
-}
+       }
+
+
+
+        return true;}
+*/
+
+// the below function to determine the jacobian is modified to iunclude partial derivatives for the binary variables. I had ignored this previously
+bool Design::eval_jac_g(Index n, const Number* x, bool new_x,
+                        Index m, Index nele_jac, Index* iRow, Index *jCol,
+                        Number* values){
+        std::vector<Cell *> cellsToSolve;
+        getNLPCellsToSolveNew ((*this),cellsToSolve);
+        int size = 2*cellsToSolve.size();
+        uint maxx,maxy;
+        DesignGetBoundingBox(maxx,maxy);
+       
+        uint averageClusterWidth,averageClusterHeight;
+        averageClusterWidth = (uint)DesignGetAverageClusterCellWidth();
+        averageClusterHeight = (uint)DesignGetAverageClusterCellHeight();
+
+        uint Mx,My;
+
+        Mx = maxx + averageClusterWidth;
+        My = maxy + averageClusterHeight;
+
+        if (values==NULL){
+                int idx=0;
+                for (int i=0;i<m;i++){
+                        iRow[idx]=i;
+                        jCol[idx]=0;
+                        idx=idx+1;
+                        iRow[idx]=i;
+                        jCol[idx]=1;
+                        idx=idx+1;
+                        iRow[idx]=i;
+                        jCol[idx]=2;
+                        idx=idx+1;
+                }                
+
+       } else {
+
+               int idx2=0;
+               for (int i=0;i<size;i=i+2){
+                       for (int j=0 ;j <size;j=j+2){
+                               if (j <=i) continue;
+                                        values[idx2]=1;
+                                        idx2=idx2+1;
+                                        values[idx2]=-1;
+                                        idx2=idx2+1;
+                                        values[idx2]=Mx;
+                                        idx2=idx2+1;
+                                        values[idx2]=-1;
+                                        idx2=idx2+1;
+                                        values[idx2]=1;
+                                        idx2=idx2+1;
+                                        values[idx2]=-Mx;
+                                        idx2=idx2+1;
+                        }
+               }
+               for (int i=1;i<size;i=i+2){
+                       for (int j=1 ;j <size;j=j+2){
+                               if (j <=i) continue;
+                                        values[idx2]=1;
+                                        idx2=idx2+1;
+                                        values[idx2]=-1;
+                                        idx2=idx2+1;
+                                        values[idx2]=My;
+                                        idx2=idx2+1;
+                                        values[idx2]=-1;
+                                        idx2=idx2+1;
+                                        values[idx2]=1;
+                                        idx2=idx2+1;
+                                        values[idx2]=-My;
+                                        idx2=idx2+1;
+                        }
+               }
+
+       }
 
 
 
@@ -362,7 +507,33 @@ bool Design::eval_h(Index n, const Number* x, bool new_x,
       //  values=NULL;
        // lambda=NULL;
         
-        return true;}
+        return false;}
+
+Index Design::get_number_of_nonlinear_variables(void){
+
+        std::vector<Cell *> cellsToSolve;
+        getNLPCellsToSolveNew ((*this),cellsToSolve);
+        Index size = 2*cellsToSolve.size();
+        return size;
+}
+
+
+bool Design::get_list_of_nonlinear_variables(Index num_nonlin_vars,Index* pos_nonlin_vars) {
+
+
+        
+        std::vector<Cell *> cellsToSolve;
+        getNLPCellsToSolveNew ((*this),cellsToSolve);
+        Index size = 2*cellsToSolve.size();
+        assert (num_nonlin_vars == size);
+        
+        for (int i=0;i<size;i++){
+                  pos_nonlin_vars[i]=i;
+        }
+
+
+        return true;
+}
 
 void Design::finalize_solution(TMINLP::SolverReturn status,
                                 Index n, const Number* x, Number obj_value){

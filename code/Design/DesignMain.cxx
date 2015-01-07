@@ -1695,6 +1695,13 @@ Design::DesignGetBoundingBox(uint &maxx, uint &maxy)
 }
 
 void
+Design::DesignGetBoundingBox(double &maxx, double &maxy)
+{
+  maxx = (*this).maxx;
+  maxy = (*this).maxy;
+}
+
+void
 Design::DesignSetGraph(HyperGraph& thisGraph) 
 {
   this->DesignGraphPtr = &thisGraph;
@@ -1928,11 +1935,77 @@ Design::DesignInit()
   DesignSclFileName = "";
   DesignPlFileName = "";
   RowBasedPlacement = false;
+  DesignSolveMINLPinY = false;
   
   DesignGraphPtr = NIL(HyperGraph *);
   /* Initialize public variables */
   /* empty for now as there are only maps and vectors */
 }
+double 
+Design::DesignComputeScalingFactor()
+{
+        
+        uint maxx,maxy;
+        DesignGetBoundingBox(maxx,maxy);
+
+        uint numberToScale = (maxx+maxy)/2;
+        uint scaleFactor =1;
+        while(numberToScale > 10){
+                scaleFactor = scaleFactor *10;
+                numberToScale = numberToScale/10;
+        }   
+
+        return scaleFactor;
+}
+
+
+double
+Design::DesignComputeLseHPWLScaled()
+{
+  Net *netPtr;
+  string netName;
+  double totalLseXHPWL, totalLseYHPWL;
+  double totalLseHPWL;
+  double xHPWL, yHPWL;
+  uint netCount;
+  double wtXHPWL, wtYHPWL;
+  bool useWeighted;
+  //  Env &DesignEnv = DesignGetEnv();
+  double scaleFactor = (*this).DesignComputeScalingFactor();
+
+  totalLseXHPWL = 0.0;
+  totalLseYHPWL = 0.0;
+  totalLseHPWL = 0.0;
+  netCount = 0;
+  double alpha = 0.5;
+
+  //cout << "Debug1" << endl;
+
+  DESIGN_FOR_ALL_NETS((*this), netName, netPtr) {
+    (*netPtr).NetComputeLseHPWLScaled(xHPWL, yHPWL,scaleFactor);
+    totalLseXHPWL += xHPWL;
+    totalLseYHPWL += yHPWL;
+    totalLseHPWL +=  xHPWL + yHPWL;
+    //    cout << "Computed HPWL of Net: " << (xHPWL + yHPWL) << endl;
+    //cout << "netcount: " << netCount << endl;
+    /*if (netCount == 2){
+            cout << " Net 2 Details: " << netName << endl;
+            cout << " totalLseXHPWL is " << totalLseXHPWL <<endl;
+            cout << " totalLseYHPWL is " << totalLseYHPWL <<endl;
+            cout << " totalLseHPWL is " << totalLseHPWL <<endl;
+    } */                
+    netCount++;
+  } DESIGN_END_FOR;
+  //this->DesignXHPWL = totalXHPWL;
+  //this->DesignYHPWL = totalYHPWL;
+  //this->DesignHPWL = totalHPWL;
+  //  cout << "Computed HPWL for : " << netCount << endl;
+  //  DesignPrintNetsHPWL();
+//  totalLseHPWL = alpha*totalLseHPWL;
+  totalLseHPWL = totalLseHPWL;
+  return totalLseHPWL; 
+}
+
 
 ulong
 Design::DesignComputeLseHPWL()
@@ -1951,6 +2024,7 @@ Design::DesignComputeLseHPWL()
   totalLseYHPWL = 0.0;
   totalLseHPWL = 0.0;
   netCount = 0;
+  uint alpha = 500;
 
   //cout << "Debug1" << endl;
 
@@ -1974,6 +2048,8 @@ Design::DesignComputeLseHPWL()
   //this->DesignHPWL = totalHPWL;
   //  cout << "Computed HPWL for : " << netCount << endl;
   //  DesignPrintNetsHPWL();
+ // totalLseHPWL = alpha*totalLseHPWL;
+  totalLseHPWL = totalLseHPWL;
   return totalLseHPWL; 
 }
 

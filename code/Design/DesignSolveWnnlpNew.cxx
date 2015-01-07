@@ -139,7 +139,8 @@ wirelengthObjFunc(int size, double *values,ptr myDesign)
    //static uint lambda;
    //lambda=2;
         double rtv;
-       rtv = LseHPWL+(penaltyParameter*totalDensityPenalty);
+       //rtv = LseHPWL+(penaltyParameter*totalDensityPenalty);
+       rtv = LseHPWL+(1*totalDensityPenalty);
         cout << "ulong wirelength is: " << LseHPWL << "\t";
         cout << "Density Penalty is : " << penaltyParameter*totalDensityPenalty << "\t";
         cout << "objective Value is : " << rtv << endl;
@@ -315,8 +316,10 @@ gradientFunc(double *grad,int size,double *values,ptr myDesign)
                 double gradPotentialX;
                 double gradPotentialY;
                 (*((Design*)myDesign)).DesignComputePenaltyGradientforCell(cellPtr,gradPotentialX,gradPotentialY);
-                grad[idx] = gradX + penaltyParameter*gradPotentialX*densityPenaltyGradient;
-                grad[idx+1]=gradY + penaltyParameter*gradPotentialY*densityPenaltyGradient;
+               // grad[idx] = gradX + penaltyParameter*gradPotentialX*densityPenaltyGradient*alpha;
+                //grad[idx+1]=gradY + penaltyParameter*gradPotentialY*densityPenaltyGradient*alpha;
+                grad[idx] = gradX*alpha + penaltyParameter*gradPotentialX;
+                grad[idx+1]=gradY*alpha + penaltyParameter*gradPotentialY;
                 //grad[idx] = gradX + 0.5*gradPotentialX;
                 //grad[idx+1]=gradY + 0.5*gradPotentialY;
                 //cout << "gradient value for cell: " << (*cellPtr).CellGetName() << "is gradx: " << gradX << " gradY: " <<gradY << endl;

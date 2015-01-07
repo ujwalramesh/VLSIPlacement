@@ -427,10 +427,12 @@ class Design : public TMINLP,public enable_shared_from_this<Design> {
 
   /* Log Sum Exponential HPWL Functions - rameshul included */
   ulong DesignComputeLseHPWL(void);
+  double DesignComputeLseHPWLScaled(void);
   ulong DesignComputeLseXHPWL(void);
   ulong DesignComputeLseYHPWL(void);
   ulong DesignComputeWtLseHPWL(void);
-
+  double DesignComputeScalingFactor(void);
+  
   void DesignComputeBinSize(bool);
   void DesignComputeBinSize(uint, uint);
   void DesignShrinkBinsForILR();
@@ -490,6 +492,7 @@ class Design : public TMINLP,public enable_shared_from_this<Design> {
 
   /* Chip boundary function */
   void DesignGetBoundingBox(uint&, uint&);
+  void DesignGetBoundingBox(double&, double&);
   
   map<uint, uint> DesignGetRowHeights();
 
@@ -668,6 +671,7 @@ class Design : public TMINLP,public enable_shared_from_this<Design> {
   /* rameshul inserted
   The below virtual functions are defined to invoke Bonmin MINLP. example to this invoking was taken from the below path
   /home/rameshul/Bonmin-1.7/Bonmin/examples/CppExample/MyTMINLP.hpp*/
+  bool DesignSolveMINLPinY; 
   virtual bool get_variables_types(Index n, VariableType* var_types);
 
   virtual bool get_variables_linearity(Index n, Ipopt::TNLP::LinearityType* var_types);
@@ -703,6 +707,9 @@ class Design : public TMINLP,public enable_shared_from_this<Design> {
 
    virtual const SosInfo * sosConstraints() const{return NULL;}
    virtual const BranchingInfo* branchingInfo() const{return NULL;}
+   virtual Index get_number_of_nonlinear_variables();
+   virtual bool get_list_of_nonlinear_variables(Index num_nonlin_vars,Index* pos_nonlin_vars);
+
    virtual ~Design() {} ;
   /* rameshul end of function insertion*/             
         

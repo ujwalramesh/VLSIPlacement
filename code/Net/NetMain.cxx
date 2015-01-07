@@ -339,6 +339,67 @@ myLog (double x) {
 /* Below Subroutine is used to calculate Log Sum exponential HPWL - icluded by rameshul */  
 
 void
+Net::NetComputeLseHPWLScaled(double &xHPWL, double &yHPWL, double scaleFactor)
+{
+  Pin *pinPtr;
+  Cell *cellPtr;
+  double cellXpos, cellYpos;
+  double pinXpos, pinYpos;
+  double idx;
+
+  /* Alpha value is to be varied to smaller amounts to get a more accurate HPWL */
+  double alpha = 0.5;
+  //double scaleFactor = (*this).DesignComputeScalingFactor();
+  double lsemaxx,lsemaxy,lseminx,lseminy;
+  lsemaxx = 0; lsemaxy =0 ; lseminx =0 ; lseminy = 0;
+    
+  maxx = 0; maxy = 0;
+  minx = INT_MAX; miny = INT_MAX;
+  int debug_switch = 0;      
+  //  cout << "HPWL: Net: " << name << endl;
+  for (idx = 0; idx < pinCount; idx++) {
+    pinPtr = PinsVecX[idx];
+    if ((*pinPtr).isHidden) {
+      continue;
+    }
+    cellPtr = (*pinPtr).PinGetParentCellPtr();
+    pinXpos = pinPtr->xOffset + cellPtr->x;
+    pinYpos = pinPtr->yOffset + cellPtr->y;
+    pinXpos = pinXpos / scaleFactor;
+    pinYpos = pinYpos / scaleFactor;
+    /*
+    if ((*cellPtr).CellIsHidden()) {
+      cout << "Cell: " << (*cellPtr).CellGetName() << " X: " << cellPtr->x << " Y: " << cellPtr->y 
+	   << " Abs: X: " << pinXpos << " Y: " << pinYpos << endl;
+	   }*/
+
+    lsemaxx += exp(pinXpos/alpha);   
+    lsemaxy += exp(pinYpos/alpha);
+    lseminx += (1/(exp(pinXpos/alpha)));
+    lseminy += (1/(exp(pinYpos/alpha)));
+
+  }
+  xHPWL = (alpha * log(lsemaxx)) + (alpha * log(lseminx));   
+  yHPWL = (alpha * log(lsemaxy)) + (alpha * log(lseminy)); 
+
+  /* rameshul Below lines are for debug purpose only - continues until End Debug */
+  if (debug_switch) {
+          cout << "pin values are: " << endl;
+          cout << " pinXpos " << pinXpos << endl;
+          cout << " pinYpos " << pinYpos << endl;
+          cout << " lsemaxx " << lsemaxx << endl;
+          cout << " lsemaxy " << lsemaxy << endl;
+          cout << " lseminx " << lseminx << endl;
+          cout << " lseminy " << lseminy << endl;
+          cout << " xHPWL " << xHPWL << endl;
+          cout << " yHPWL " << yHPWL << endl;
+          debug_switch =0 ;
+        }
+ /* End Debug */        
+}
+
+
+void
 Net::NetComputeLseHPWL(uint &xHPWL, uint &yHPWL)
 {
   Pin *pinPtr;
@@ -376,8 +437,8 @@ Net::NetComputeLseHPWL(uint &xHPWL, uint &yHPWL)
     lseminy += (1/(exp(pinYpos/alpha)));
 
   }
-  xHPWL = (alpha * myLog(lsemaxx)) + (alpha * myLog(lseminx));   
-  yHPWL = (alpha * myLog(lsemaxy)) + (alpha * myLog(lseminy)); 
+  xHPWL = (alpha * log(lsemaxx)) + (alpha * log(lseminx));   
+  yHPWL = (alpha * log(lsemaxy)) + (alpha * log(lseminy)); 
 
   /* rameshul Below lines are for debug purpose only - continues until End Debug */
   if (debug_switch) {
@@ -430,7 +491,7 @@ Net::NetComputeLseXHPWL(uint &xHPWL)
     lseminx += (1/(exp(pinXpos/alpha)));
 
   }
-  xHPWL = (alpha * myLog(lsemaxx)) + (alpha * myLog(lseminx));   
+  xHPWL = (alpha * log(lsemaxx)) + (alpha * log(lseminx));   
 
   /* rameshul Below lines are for debug purpose only - continues until End Debug */
   if (debug_switch) {
@@ -479,7 +540,7 @@ Net::NetComputeLseYHPWL(uint &yHPWL)
     lseminy += (1/(exp(pinYpos/alpha)));
 
   }
-  yHPWL = (alpha * myLog(lsemaxy)) + (alpha * myLog(lseminy));   
+  yHPWL = (alpha * log(lsemaxy)) + (alpha * log(lseminy));   
 
   /* rameshul Below lines are for debug purpose only - continues until End Debug */
   if (debug_switch) {
