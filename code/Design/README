@@ -1,0 +1,51 @@
+###################################################################################
+#     The following readme file describes the files in the design folder for      #
+#            wnnlp and Bonmin and knitro  - Ujwal Ramesh                          #
+###################################################################################
+
+
+
+BONMIN - IPOPT approach to solve MINLP
+**************************************
+
+This approach required 2 files to invoke solver
+1) 1 file to give options to solver, initialize,start and catch some exception if present.
+2) 2nd file to code the virtual functions of the base class of the solver.
+
+
+
+ File 1 Change Log 
+ *****************
+ 1) DesignSolveMINLP.cxx         -  Solving for X and Y together. Solver invoked only once
+ 2) DesignSolveMINLPscaled.cxx   -  Solver invoked by scaling down the problem to have values to be between 0 and 1
+ 3) DesignSolveMINLPXY.cxx       -  Solver invoked to solve in X and Y seperately. Solver invoked twice 
+ 
+
+
+
+ File 2 Change Log
+ *****************
+1) DesignTMINLP.cxx                    -     
+2) DesignTMINLP_bkp.cxx                -
+3) DesignTMINLP_LPNew.cxx              -
+4) DesignTMINLP_LPtest2.cxx            -
+5) DesignTMINLP_LPtest2Scaled.cxx      -
+6) DesignTMINLP_LPtest.cxx             - prototype with 1 constraint to solve for X and Y while solver invoked only once
+7) DesignTMINLP_LPtestXY.cxx           - prototype with 4 constraints to solve for X and Y seperately while solver invoked twice
+8) DesignTMINLP_LPtestXY_2const.cxx    - prototype with 2 constraints to solve for X and Y seperately while solver invoked twice
+9) DesignTMINLP_LPtestXY_2constNew.cxx - 
+
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+
+
+WNNLP - Will Naylor's library to solve a nonlinear objective using conjugate gradient appproach
+***********************************************************************************************
+
+
+ wnnlp file change Log
+ *********************
+1) DesignSolveWnnlp.cxx
+2) DesignSolveWnnlpNew.cxx
+3) DesignSolveWnnlpXY.cxx

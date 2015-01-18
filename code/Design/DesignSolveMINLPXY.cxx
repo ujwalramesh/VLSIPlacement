@@ -196,7 +196,7 @@ bonminX.initializeOptionsAndJournalist();
 ///////////////////////////////////////////////////
      bonminX.options()->SetStringValue("hessian_approximation","limited-memory");
     // bonminX.options()->SetStringValue("derivative_test","first-order");
-     bonminX.options()->SetStringValue("output_file","Ipopt.log");
+     bonminX.options()->SetStringValue("output_file","IpoptX.log");
      //Here we read several option files
      bonminX.readOptionsFile("MybonminX.opt");
     // bonminX.readOptionsFile();// This reads the default file "bonminX.opt"
@@ -279,7 +279,7 @@ bonminY.initializeOptionsAndJournalist();
 ///////////////////////////////////////////////////
      bonminY.options()->SetStringValue("hessian_approximation","limited-memory");
     // bonminY.options()->SetStringValue("derivative_test","first-order");
-     bonminY.options()->SetStringValue("output_file","Ipopt.log");
+     bonminY.options()->SetStringValue("output_file","IpoptY.log");
      //Here we read several option files
      bonminY.readOptionsFile("MybonminY.opt");
     // bonminY.readOptionsFile();// This reads the default file "bonminY.opt"

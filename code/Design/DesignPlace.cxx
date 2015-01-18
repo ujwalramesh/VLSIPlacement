@@ -656,6 +656,8 @@ Design::DesignDoLegalization(void)
   string dirName;
   string desName = DesignEnv.EnvGetDesignName();
   EnvLegalizer legalizerType = DesignEnv.EnvGetLegalizer();
+  /*rameshul inserted Jugad Technique*/ 
+  legalizerType = ENV_FAST_PLACE_LEGALIZER;
   
   switch (legalizerType) {
   case ENV_BIN_BASED_LEGALIZER:
@@ -664,6 +666,7 @@ Design::DesignDoLegalization(void)
     DesignEnv.EnvRecordLegalizationTime();
     break;
   case ENV_FAST_PLACE_LEGALIZER:
+    cout << "STARTING LEGALIZER" <<endl;     
     time_t timer1;
     time_t timer2;
     double cpuTimeSpent;
@@ -696,6 +699,7 @@ Design::DesignDoDetailedPlacement(void)
   case ENV_NO_DETAIL_PLACEMENT:
     break;
   case ENV_FAST_PLACE_DP:
+   cout << "STARTING DETAILED PLACEMENT" << endl;
     time_t timer1;
     time_t timer2;
     double cpuTimeSpent;

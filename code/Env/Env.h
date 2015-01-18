@@ -88,6 +88,7 @@ typedef enum {
   NUM_LEGALIZERS
 } EnvLegalizer;
 # define DEFAULT_ENV_LEGALIZER ENV_NTUPLACE_LEGALIZER
+//# define DEFAULT_ENV_LEGALIZER ENV_FAST_PLACE_LEGALIZER
 
 /* Define the detailed placer used in the placement tool  */
 typedef enum {
@@ -97,6 +98,7 @@ typedef enum {
   NUM_DETAILED_PLACEMENT
 } EnvDetailedPlacer;
 # define DEFAULT_ENV_DETAIL_PLACEMENT ENV_NO_DETAIL_PLACEMENT
+//# define DEFAULT_ENV_DETAIL_PLACEMENT ENV_FAST_PLACE_DP
 
 /* Define the type of optimization desired in the placement tool  */
 typedef enum {

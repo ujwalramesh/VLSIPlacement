@@ -33,7 +33,9 @@ Env::Env()
   EnvSetOptType(DEFAULT_ENV_OPT_TYPE);
   EnvSetClusterType(DEFAULT_ENV_CLUSTER_TYPE);
   EnvSetClusterGlobalPlacerType(DEFAULT_ENV_GLOBAL_PLACER_TYPE);
+  /* rameshul modified*/
   EnvSetClusterLegalizerType(DEFAULT_ENV_LEGALIZER);
+  //EnvSetClusterLegalizerType(ENV_NTUPLACE_LEGALIZER);
   EnvSetClusterPlacementType(DEFAULT_ENV_CLUSTER_PLACEMENT_TYPE);
   EnvSetUnclusterType(DEFAULT_ENV_UNCLUSTER_TYPE);
   EnvSetShapeSelectionType(DEFAULT_ENV_SHAPE_SELECTION_TYPE);

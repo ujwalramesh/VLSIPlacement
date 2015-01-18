@@ -736,6 +736,10 @@ int placeMain(Env &topEnv)
    *  DO LEGALIZATION                                 *
    ****************************************************/
     myDesign.DesignDoLegalization();
+    /*rameshul Inserted*/
+    double percentageOverlap;
+    percentageOverlap = myDesign.DesignDumpClusterOverlapForPenalty();
+    cout << "Percentage Overlap After Legalization" << percentageOverlap << endl;
     
   /****************************************************
    *  DO DETAILED PLACEMENT                           *
